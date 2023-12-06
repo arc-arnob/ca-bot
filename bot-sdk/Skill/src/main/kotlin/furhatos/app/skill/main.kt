@@ -1,6 +1,7 @@
 package furhatos.app.skill
 
 import furhatos.app.skill.flow.Init
+import furhatos.app.skill.flow.main.Idle
 import furhatos.flow.kotlin.Flow
 import furhatos.skills.Skill
 

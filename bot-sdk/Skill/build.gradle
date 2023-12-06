@@ -41,11 +41,14 @@ repositories {
     maven { url "https://s3-eu-west-1.amazonaws.com/furhat-maven/releases"}
     maven { url 'https://repo.gradle.org/gradle/libs-releases' }
     maven { url { "https://repo1.maven.org/maven2/" } }
+    maven { url "https://furhatrobotics.bintray.com/furhat" }
+    jcenter()
 }
 
 
 dependencies {
     implementation 'com.furhatrobotics.furhatos:furhat-commons:2.7.1'
+    implementation 'khttp:khttp:1.0.0'
 }
 
 jar {

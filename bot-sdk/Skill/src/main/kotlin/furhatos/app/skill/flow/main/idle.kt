@@ -1,11 +1,17 @@
 package furhatos.app.skill.flow.main
 
-import furhatos.flow.kotlin.State
-import furhatos.flow.kotlin.furhat
-import furhatos.flow.kotlin.onUserEnter
-import furhatos.flow.kotlin.state
+import furhatos.flow.kotlin.*
 
 val Idle: State = state {
+
+    init {
+        if (users.count > 0) {
+            furhat.attend(users.random)
+            goto(Greeting)
+        }
+    }
+
+
     onEntry {
         furhat.attendNobody()
     }
