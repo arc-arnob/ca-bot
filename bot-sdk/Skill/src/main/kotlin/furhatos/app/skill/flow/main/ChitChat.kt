@@ -5,6 +5,7 @@ import furhatos.app.skill.info
 import furhatos.app.skill.nlu.Fun
 import furhatos.app.skill.nlu.ProvideName
 import furhatos.flow.kotlin.*
+import furhatos.gestures.Gestures
 import furhatos.nlu.common.DontKnow
 import furhatos.nlu.common.Maybe
 import furhatos.nlu.common.No
@@ -34,6 +35,7 @@ val ChitChat: State = state {
         furhat.say("${users.current.info.name}, I guess silence speaks volumes. And I know you ${
             if (users.current.info.likeRobot) "like robots" else "don't like robots"
         }")
+        Gestures.BigSmile
     }
 
     onResponse<DontKnow> {

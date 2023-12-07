@@ -7,6 +7,7 @@ import furhatos.flow.kotlin.onResponse
 import furhatos.flow.kotlin.state
 import furhatos.gestures.Gestures
 import furhatos.nlu.common.*
+import furhatos.app.skill.nlu.Questions
 
 val Greeting: State = state(Parent) {
     onEntry {
@@ -33,6 +34,10 @@ val Greeting: State = state(Parent) {
             furhat.stopGestures()
             goto(Explain)
         }
+    }
+
+    onResponse(Questions) {
+        furhat.say("You said:" + it.text)
     }
 
     onResponse<Yes> {
