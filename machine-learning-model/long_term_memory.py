@@ -5,7 +5,7 @@ Created on Fri Dec 22 18:58:32 2023
 
 @author: arnobchowdhury
 """
-# %%
+# %% open AI embedding
 import requests
 
 api_key = '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'
@@ -35,12 +35,12 @@ else:
     print(f"Error: {response.status_code}\n{response.text}")
     
     
-#%%
+#%% Maths Qa dataset
 from datasets import load_dataset
 
 dataset = load_dataset("math_qa")
     
-# %%
+# %% Embeding model 1
 from sentence_transformers import SentenceTransformer, util
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
@@ -62,7 +62,7 @@ query_embedding = model.encode('What does dog do?')
 
 print("Similarity:", util.dot_score(query_embedding, embeddings))
 
-# %%
+# %% Embedding Model 2
 model = SentenceTransformer('multi-qa-MiniLM-L6-cos-v1')
 
 query_embedding = model.encode('What does fox do?')
@@ -71,3 +71,114 @@ passage_embedding = model.encode(['The fox ran after dog barked at it',
     'The quick brown fox jumps over the lazy dog.'])
 
 print("Similarity:", util.dot_score(query_embedding, passage_embedding)) 
+
+
+# %% TEST Flan Model Text to Text
+
+import requests
+
+API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-xxl"
+headers = {"Authorization": "Bearer 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"}
+
+def query(payload):
+	response = requests.post(API_URL, headers=headers, json=payload)
+	return response.json()
+
+# Demo Previous Knowledge
+llmchain_information = [
+    "A LLMChain is the most common type of chain. It consists of a PromptTemplate, a model (either an LLM or a ChatModel), and an optional output parser. This chain takes multiple input variables, uses the PromptTemplate to format them into a prompt. It then passes that to the model. Finally, it uses the OutputParser (if provided) to parse the output of the LLM into a final format.",
+    "Chains is an incredibly generic concept which returns to a sequence of modular components (or other chains) combined in a particular way to accomplish a common use case.",
+    "LangChain is a framework for developing applications powered by language models. We believe that the most powerful and differentiated applications will not only call out to a language model via an api, but will also: (1) Be data-aware: connect a language model to other sources of data, (2) Be agentic: Allow a language model to interact with its environment. As such, the LangChain framework is designed with the objective in mind to enable those types of applications."
+]
+
+knowledge = "\n".join(llmchain_information)
+augmented_prompt = 'Using the contexts below, answer the query.'
+query2 = "Can you tell me about the LLMChain in LangChain?"
+
+inputs = knowledge + " " + augmented_prompt + " " + query2 
+
+output = query({
+	"inputs": inputs,
+})
+print(output)
+
+
+
+# %%
+import requests
+from datasets import load_dataset
+from sentence_transformers import SentenceTransformer, util
+
+def openai_embedding(api_key, text, model="text-embedding-ada-002"):
+    api_endpoint = "https://api.openai.com/v1/embeddings"
+
+    data = {
+        "input": text,
+        "model": model
+    }
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.post(api_endpoint, json=data, headers=headers)
+
+    if response.status_code == 200:
+        return response.json()["embedding"]
+    else:
+        print(f"Error: {response.status_code}\n{response.text}")
+        return None
+
+def load_math_qa_dataset():
+    dataset = load_dataset("math_qa")
+    return dataset
+
+def sentence_transformer_embedding(model_name, sentences):
+    model = SentenceTransformer(model_name)
+    embeddings = model.encode(sentences)
+    
+    for sentence, embedding in zip(sentences, embeddings):
+        print("Sentence:", sentence)
+        print("Embedding:", embedding)
+        print("")
+
+    return embeddings
+
+def calculate_similarity(query_embedding, passage_embeddings):
+    return util.dot_score(query_embedding, passage_embeddings)
+
+def flan_model_text_to_text(api_url, headers, payload):
+    response = requests.post(api_url, headers=headers, json=payload)
+    return response.json()
+
+# Example usage:
+
+# OpenAI Embedding
+openai_api_key = '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'
+openai_text = 'Ask me anything'
+openai_result = openai_embedding(openai_api_key, openai_text)
+print(openai_result)
+
+# Load Math QA Dataset
+math_qa_dataset = load_math_qa_dataset()
+print(math_qa_dataset)
+
+# Sentence Transformer Embedding
+sentences_to_embed = ['This is sentence 1', 'This is sentence 2', 'This is sentence 3']
+sentence_transformer_model = 'all-MiniLM-L6-v2'
+sentence_transformer_result = sentence_transformer_embedding(sentence_transformer_model, sentences_to_embed)
+
+# Calculate Similarity
+query_emb = sentence_transformer_result[0]
+passage_embs = sentence_transformer_result[1:]
+similarity_score = calculate_similarity(query_emb, passage_embs)
+print("Similarity Score:", similarity_score)
+
+# Flan Model Text to Text
+flan_api_url = "https://api-inference.huggingface.co/models/google/flan-t5-xxl"
+flan_headers = {"Authorization": "Bearer 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"}
+flan_payload = {"inputs": "Your input text here"}
+flan_result = flan_model_text_to_text(flan_api_url, flan_headers, flan_payload)
+print(flan_result)
+
