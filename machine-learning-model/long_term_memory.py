@@ -86,14 +86,12 @@ def query(payload):
 
 # Demo Previous Knowledge
 llmchain_information = [
-    "A LLMChain is the most common type of chain. It consists of a PromptTemplate, a model (either an LLM or a ChatModel), and an optional output parser. This chain takes multiple input variables, uses the PromptTemplate to format them into a prompt. It then passes that to the model. Finally, it uses the OutputParser (if provided) to parse the output of the LLM into a final format.",
-    "Chains is an incredibly generic concept which returns to a sequence of modular components (or other chains) combined in a particular way to accomplish a common use case.",
-    "LangChain is a framework for developing applications powered by language models. We believe that the most powerful and differentiated applications will not only call out to a language model via an api, but will also: (1) Be data-aware: connect a language model to other sources of data, (2) Be agentic: Allow a language model to interact with its environment. As such, the LangChain framework is designed with the objective in mind to enable those types of applications."
-]
+'''{'Problem': "the banker ' s gain of a certain sum due 3 years hence at 10 % per annum is rs . 36 . what is the present worth ?", 'Rationale': '"explanation : t = 3 years r = 10 % td = ( bg × 100 ) / tr = ( 36 × 100 ) / ( 3 × 10 ) = 12 × 10 = rs . 120 td = ( pw × tr ) / 100 ⇒ 120 = ( pw × 3 × 10 ) / 100 ⇒ 1200 = pw × 3 pw = 1200 / 3 = rs . 400 answer : option a"', 'options': 'a ) rs . 400 , b ) rs . 300 , c ) rs . 500 , d ) rs . 350 , e ) none of these', 'correct': 'a', 'annotated_formula': 'divide(multiply(const_100, divide(multiply(36, const_100), multiply(3, 10))), multiply(3, 10))', 'linear_formula': 'multiply(n2,const_100)|multiply(n0,n1)|divide(#0,#1)|multiply(#2,const_100)|divide(#3,#1)|', 'category': 'gain'}'''
+    ]
 
 knowledge = "\n".join(llmchain_information)
-augmented_prompt = 'Using the contexts below, answer the query.'
-query2 = "Can you tell me about the LLMChain in LangChain?"
+augmented_prompt = 'Using the contexts above.'
+query2 = "Can you ask me a question?"
 
 inputs = knowledge + " " + augmented_prompt + " " + query2 
 
