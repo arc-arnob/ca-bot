@@ -29,7 +29,7 @@ LIST_FILES = [
     "src/models/user_model.py",
     # services
     "src/services/__init__.py",
-    "src/services/jwt_service.py",
+    "src/services/create_knowledge_base.py",
     # routes and utils
     "src/routes.py",
     "src/utils.py",
