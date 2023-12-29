@@ -1,4 +1,5 @@
 from flask import request, Response, json, Blueprint
+import asyncio
 import time
 from ..services.short_term_memory_service import (save_to_short_term_memory, get_recent_conversation_history,
                                                   ShortTermMemoryError)
@@ -35,13 +36,12 @@ def get_recent_conversation_controller():
     try:
         raw_conversation = request.json
         result = get_recent_conversation_history(raw_conversation)
-        matches = result.json()
-        print(matches)
-        return Response(
-            response=json.dumps({'data': matches, 'status': "success"}),
-            status=200,
-            mimetype='application/json'
-        )
+        if result is not None:
+            return Response(
+                response=json.dumps({'data': result.to_dict()['matches'], 'status': "success"}),
+                status=200,
+                mimetype='application/json'
+            )
     except ShortTermMemoryError as e:
         error_message = str(e)
         return Response(

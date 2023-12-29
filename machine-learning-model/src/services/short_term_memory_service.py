@@ -6,6 +6,7 @@ import time
 import uuid
 from datetime import datetime
 load_dotenv()
+from flask import json
 
 
 class ShortTermMemoryError(Exception):
@@ -50,6 +51,7 @@ def save_to_short_term_memory(raw_conversation_log):
 
 def get_recent_conversation_history(raw_convo, number_of_convo=6):
     try:
+        some_related_convo = None
         index_name = 'bot-short-term-memory'
         encoded_query = context_encoding(raw_convo)
         pinecone.init(
@@ -57,15 +59,16 @@ def get_recent_conversation_history(raw_convo, number_of_convo=6):
             environment="gcp-starter",
         )
         index = pinecone.Index(index_name)
-        some_related_convo = index.query(
+        response = index.query(
             vector=encoded_query,
             top_k=number_of_convo,
             include_metadata=True
         )
-        return some_related_convo
+        return response
+
     except Exception as e:
         print(e)
-        error_message = f"An error occurred while fetching recent convo: {str(e)}"
+        error_message = f"An error occurred while fetching recent convo 001x: {str(e)}"
         raise ShortTermMemoryError(error_message)
 
 
