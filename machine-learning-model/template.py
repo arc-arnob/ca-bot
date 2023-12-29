@@ -21,7 +21,7 @@ LIST_FILES = [
     "src/config/production.py",
     # controllers
     "src/controllers/__init__.py",
-    "src/controllers/auth_controller.py",
+    "src/controllers/main_controller.py",
     # middlewares
     "src/middlewares/__init__.py",
     # models

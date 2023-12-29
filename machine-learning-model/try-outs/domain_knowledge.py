@@ -46,8 +46,8 @@ prompts = create_one_liner_prompts(dataset)
 from sentence_transformers import SentenceTransformer, util
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
-#query_embedding = model.encode('Ask me a question from gain topic')
-#passage_embedding = model.encode(prompts)
+query_embedding = model.encode('Ask me a question from gain topic')
+passage_embedding = model.encode(prompts)
 
 # %%
 similarity = util.dot_score(query_embedding, passage_embedding)

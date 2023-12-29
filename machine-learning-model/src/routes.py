@@ -1,5 +1,7 @@
 from flask import Blueprint
-from .controllers.auth_controller import resources
+from .controllers.main_controller import resources
+
+from .services.short_term_memory_service import save_to_short_term_memory
 
 api = Blueprint('api', __name__)
 
