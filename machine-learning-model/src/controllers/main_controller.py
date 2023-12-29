@@ -1,5 +1,8 @@
 from flask import request, Response, json, Blueprint
-from ..services.short_term_memory_service import save_to_short_term_memory, ShortTermMemoryError
+import time
+from ..services.short_term_memory_service import (save_to_short_term_memory, get_recent_conversation_history,
+                                                  ShortTermMemoryError)
+
 resources = Blueprint("cabot", __name__)
 
 
@@ -19,6 +22,27 @@ def save_to_short_term_memory_controller():
         )
     except ShortTermMemoryError as e:
         # Handle the custom exception and return an error response
+        error_message = str(e)
+        return Response(
+            response=json.dumps({'status': "error", 'message': error_message}),
+            status=500,  # Internal Server Error
+            mimetype='application/json'
+        )
+
+
+@resources.route('/get_recent_conversations', methods=["POST"])
+def get_recent_conversation_controller():
+    try:
+        raw_conversation = request.json
+        result = get_recent_conversation_history(raw_conversation)
+        matches = result.json()
+        print(matches)
+        return Response(
+            response=json.dumps({'data': matches, 'status': "success"}),
+            status=200,
+            mimetype='application/json'
+        )
+    except ShortTermMemoryError as e:
         error_message = str(e)
         return Response(
             response=json.dumps({'status': "error", 'message': error_message}),
