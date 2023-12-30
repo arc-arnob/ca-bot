@@ -1,9 +1,11 @@
 from flask import request, Response, json, Blueprint
-import asyncio
-import time
 from ..services.short_term_memory_service import (save_to_short_term_memory, get_recent_conversation_history,
                                                   ShortTermMemoryError)
 from ..services.long_term_memory_service import (fetch_from_domain_knowledge, KnowledgeFetchError)
+
+from ..services.predict_context import (predict_context, InferenceError)
+
+from ..services.dialog_manager import lets_talk
 
 resources = Blueprint("cabot", __name__)
 
@@ -39,7 +41,7 @@ def get_recent_conversation_controller():
         result = get_recent_conversation_history(raw_conversation)
         if result is not None:
             return Response(
-                response=json.dumps({'data': result.to_dict()['matches'], 'status': "success"}),
+                response=json.dumps({'data': result, 'status': "success"}),
                 status=200,
                 mimetype='application/json'
             )
@@ -70,3 +72,45 @@ def fetch_from_domain_knowledge_controller():
             status=500,  # Internal Server Error
             mimetype='application/json'
         )
+
+
+@resources.route('/predict_context', methods=["POST"])
+def predict_context_controller():
+    try:
+        raw_conversation = request.json
+        result = predict_context(raw_conversation['user'])
+        if result is not None:
+            return Response(
+                response=json.dumps({'data': result, 'status': "success"}),
+                status=200,
+                mimetype='application/json'
+            )
+    except InferenceError as e:
+        error_message = str(e)
+        return Response(
+            response=json.dumps({'status': "error", 'message': error_message}),
+            status=500,  # Internal Server Error
+            mimetype='application/json'
+        )
+
+
+@resources.route('/lets_talk', methods=["POST"])
+def lets_talk_controller():
+    try:
+        raw_conversation = request.json
+        result = lets_talk(raw_conversation)
+        print(result)
+        if result is not None:
+            return Response(
+                response=json.dumps({'data': result, 'status': "success"}),
+                status=200,
+                mimetype='application/json'
+            )
+    except InferenceError as e:
+        error_message = str(e)
+        return Response(
+            response=json.dumps({'status': "error", 'message': error_message}),
+            status=500,  # Internal Server Error
+            mimetype='application/json'
+        )
+

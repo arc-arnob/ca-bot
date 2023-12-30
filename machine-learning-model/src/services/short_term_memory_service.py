@@ -62,7 +62,7 @@ def get_recent_conversation_history(raw_convo, number_of_convo=6):
             top_k=number_of_convo,
             include_metadata=True
         )
-        return response
+        return response.to_dict()['matches']
 
     except Exception as e:
         print(e)
