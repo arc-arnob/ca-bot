@@ -20,12 +20,14 @@ def lets_talk(raw_conversation):
 
 def generate_dialog(user_conversation, user_intent, domain_knowledge, recent_convos):
     knowledge = prompt_ready_recent_conversation(recent_convos)
-    augmented_prompt="Using given dialogs reply"
-    prompt = knowledge + " " + augmented_prompt + " " + user_conversation['USER']
+    augmented_prompt = ".Use the above information to respond to the message: "
+    prompt = "Below are some of the most relevant interactions from this chat: " + knowledge + " " + augmented_prompt + " " + user_conversation['USER']
     generated_dialog = ask_llm(prompt)
     return {
         "prompt": prompt,
-        "generated_text": generated_dialog
+        "generated_text": generated_dialog,
+        "domain_knowledge": domain_knowledge,
+        "user_intent": user_intent
     }
 
 
