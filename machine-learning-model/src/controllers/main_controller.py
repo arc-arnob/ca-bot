@@ -3,6 +3,7 @@ import asyncio
 import time
 from ..services.short_term_memory_service import (save_to_short_term_memory, get_recent_conversation_history,
                                                   ShortTermMemoryError)
+from ..services.long_term_memory_service import (fetch_from_domain_knowledge, KnowledgeFetchError)
 
 resources = Blueprint("cabot", __name__)
 
@@ -43,6 +44,26 @@ def get_recent_conversation_controller():
                 mimetype='application/json'
             )
     except ShortTermMemoryError as e:
+        error_message = str(e)
+        return Response(
+            response=json.dumps({'status': "error", 'message': error_message}),
+            status=500,  # Internal Server Error
+            mimetype='application/json'
+        )
+
+
+@resources.route('/get_domain_knowledge', methods=["POST"])
+def fetch_from_domain_knowledge_controller():
+    try:
+        raw_conversation = request.json
+        result = fetch_from_domain_knowledge(raw_conversation['user'])
+        if result is not None:
+            return Response(
+                response=json.dumps({'data': result, 'status': "success"}),
+                status=200,
+                mimetype='application/json'
+            )
+    except KnowledgeFetchError as e:
         error_message = str(e)
         return Response(
             response=json.dumps({'status': "error", 'message': error_message}),
