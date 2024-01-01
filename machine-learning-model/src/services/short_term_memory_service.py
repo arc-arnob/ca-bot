@@ -70,6 +70,17 @@ def get_recent_conversation_history(raw_convo, number_of_convo=6):
         raise ShortTermMemoryError(error_message)
 
 
+def update_stm_metadata(update_id, values, meta_data):
+    index_name = 'bot-short-term-memory'
+    pinecone.init(
+        api_key=os.environ.get('pinecone_short_term_mem'),
+        environment="gcp-starter",
+    )
+    index = pinecone.Index(index_name)
+    print(update_id, values, meta_data)
+    index.upsert([(update_id, values, meta_data)])
+
+
 def context_encoding(raw_conversation_log):
     model = SentenceTransformer('all-MiniLM-L6-v2')
     bot_message = raw_conversation_log.get('BOT')

@@ -5,7 +5,7 @@ from ..services.long_term_memory_service import (fetch_from_domain_knowledge, Kn
 
 from ..services.predict_context import (predict_context, InferenceError)
 
-from ..services.dialog_manager import lets_talk
+from ..services.dialog_manager import lets_talk, DialogManagerError, update_rag_with_user_response
 
 resources = Blueprint("cabot", __name__)
 
@@ -99,7 +99,6 @@ def lets_talk_controller():
     try:
         raw_conversation = request.json
         result = lets_talk(raw_conversation)
-        print(result)
         if result is not None:
             return Response(
                 response=json.dumps({'data': result, 'status': "success"}),
@@ -114,3 +113,21 @@ def lets_talk_controller():
             mimetype='application/json'
         )
 
+
+@resources.route('/update_rag_user_input', methods=["POST"])
+def update_rag_user_input_controller():
+    try:
+        response = request.json
+        update_rag_with_user_response(response)
+        return Response(
+            response=json.dumps({'status': "success"}),
+            status=200,
+            mimetype='application/json'
+        )
+    except DialogManagerError as e:
+        error_message = str(e)
+        return Response(
+            response=json.dumps({'status': "error", 'message': error_message}),
+            status=500,  # Internal Server Error
+            mimetype='application/json'
+        )

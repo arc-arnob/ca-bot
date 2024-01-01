@@ -24,7 +24,8 @@ def fetch_from_domain_knowledge(query):
         res = index.query(
             vector=encoded_query,
             top_k=15,
-            include_metadata=True
+            include_metadata=True,
+            include_values = True
         )
         return res.to_dict()
     except Exception as e:

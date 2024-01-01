@@ -1,6 +1,11 @@
-from ..services.short_term_memory_service import save_to_short_term_memory, get_recent_conversation_history
 from ..services.long_term_memory_service import fetch_from_domain_knowledge
 from ..services.predict_context import predict_context, ask_llm
+from ..services.short_term_memory_service import (save_to_short_term_memory, get_recent_conversation_history,
+                                                  update_stm_metadata)
+
+
+class DialogManagerError(Exception):
+    pass
 
 
 def lets_talk(raw_conversation):
@@ -44,3 +49,25 @@ def prompt_ready_recent_conversation(recent_convos):
     full_prompt = "\n".join(conversation_strings)
 
     return full_prompt
+
+
+def update_rag_with_user_response(quiz_payload):
+    try:
+        # Get Short term memory index
+        # do something like index.update(id="id-3", set_metadata={"type": "web", "new": True})
+        """
+        :param quiz_payload:
+        :return:
+        """
+        update_id = quiz_payload['rag_data']['id']
+        values = quiz_payload['rag_data']['values']
+        user_response = quiz_payload['user_response']
+        metadata = quiz_payload['rag_data']['metadata']
+        metadata['user_answer'] = user_response['answer']
+        metadata['is_correct'] = user_response['is_correct']
+        metadata['user_reasoning'] = user_response['reason']
+        set_metadata = metadata
+        update_stm_metadata(update_id, values, set_metadata)
+    except Exception as e:
+        error_message = f"An error with dialog manager: {str(e)}"
+        raise DialogManagerError(error_message)
