@@ -13,7 +13,7 @@ import time
 
 index_name = 'bot-short-term-memory'
 pinecone.init(
-    api_key=os.environ.get('5d14cafb-ac8a-494f-a10d-1a659a866081') or '5d14cafb-ac8a-494f-a10d-1a659a866081',
+    api_key=os.environ.get('pinecone_short_term_mem'),
     environment="gcp-starter",
 )
 if index_name not in pinecone.list_indexes():

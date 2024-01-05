@@ -53,7 +53,7 @@ def get_recent_conversation_history(raw_convo, number_of_convo=6):
         index_name = 'bot-short-term-memory'
         encoded_query = context_encoding(raw_convo)
         pinecone.init(
-            api_key=os.environ.get('5d14cafb-ac8a-494f-a10d-1a659a866081') or '5d14cafb-ac8a-494f-a10d-1a659a866081',
+            api_key=os.environ.get('pinecone_short_term_mem'),
             environment="gcp-starter",
         )
         index = pinecone.Index(index_name)

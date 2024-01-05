@@ -12,6 +12,9 @@ import os
 from langchain.vectorstores import Pinecone
 # Pine Code Vector DB setup
 import pinecone
+import os
+from dotenv import load_dotenv
+load_dotenv()
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 # Embeddings
 from langchain.embeddings import HuggingFaceEmbeddings
@@ -56,7 +59,7 @@ print("Similarity:", util.dot_score(query_embedding, passage_embedding)[0][3])
 #%%
 # get API key from app.pinecone.io and environment from console
 pinecone.init(
-    api_key=os.environ.get('bac9d10e-b651-4414-8dd2-1bd94da6b85d') or 'bac9d10e-b651-4414-8dd2-1bd94da6b85d',
+    api_key=os.environ.get('pinecone_long_term_mem'),
     environment="gcp-starter",
 )
 
