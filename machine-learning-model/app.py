@@ -1,5 +1,17 @@
 from src import config, app
-from gevent.pywsgi import WSGIServer
+from flask import request
+# from gevent.pywsgi import WSGIServer
+from src.services.predict_context import predict_context
+
+# @app.before_request
+# def check_user_context():
+#     request_body = request.json
+#     if 'user' in request_body:
+#         predict_context(request_body['user'])
+#     elif 'USER' in request_body:
+#         predict_context(request_body['USER'])
+
+
 
 if __name__ == "__main__":
     app.run(host=config.HOST,

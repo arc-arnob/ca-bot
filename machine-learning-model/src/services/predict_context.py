@@ -1,6 +1,10 @@
 import requests
 
 
+STUDY = 'study'
+NOT_STUDY = 'not study'
+
+
 class InferenceError(Exception):
     pass
 
@@ -27,7 +31,8 @@ def ask_llm(payload):
 
 def predict_context(raw_conversation):
     try:
-        prompt = "If you said " + raw_conversation + ". What do you want to do? Answer in one word"
+        prompt = (f"If you said ${raw_conversation}. which one out of ${STUDY} or ${NOT_STUDY} does the intent of the "
+                  f"user most matches?")
         context = ask_llm(prompt)
         switch_to_study = does_user_want_to_study(raw_conversation)
         response = {
@@ -46,6 +51,7 @@ def predict_context(raw_conversation):
 
 
 def does_user_want_to_study(raw_conversation):
+    print(raw_conversation)
     try:
         prompt = "If I said " + raw_conversation + ". Do I want to study? Answer in yes or no."
         response = ask_llm(prompt)
@@ -58,3 +64,18 @@ def does_user_want_to_study(raw_conversation):
     except Exception as e:
         print(f"An unexpected error occurred in does_user_want_to_study: {e}")
         raise InferenceError("Unexpected error in does_user_want_to_study")
+
+
+def rag_specific_intents(user_statement):
+    try:
+        prompt = "If the user said: " + user_statement + ". Is the user asking to fetch correct or wrong answers?"
+        response = ask_llm(prompt)
+        return response
+
+    except InferenceError as ie:
+        print(f"Inference error in rag_specific_intents: {str(ie)}")
+        return {"error": str(ie)}
+
+    except Exception as e:
+        print(f"An unexpected error occurred in rag_specific_intents: {e}")
+        raise InferenceError("Unexpected error in rag_specific_intents")

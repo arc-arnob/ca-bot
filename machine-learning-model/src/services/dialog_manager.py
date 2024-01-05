@@ -55,6 +55,7 @@ def update_rag_with_user_response(quiz_payload):
     try:
         # Get Short term memory index
         # do something like index.update(id="id-3", set_metadata={"type": "web", "new": True})
+        # FIXME: LTM new pinecone db.
         """
         :param quiz_payload:
         :return:
