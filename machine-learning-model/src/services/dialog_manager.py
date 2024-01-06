@@ -67,6 +67,7 @@ def update_rag_with_user_response(quiz_payload):
         metadata['user_answer'] = user_response['answer']
         metadata['is_correct'] = user_response['is_correct']
         metadata['user_reasoning'] = user_response['reason']
+        metadata['context'] = 'quiz'
         set_metadata = metadata
         update_stm_metadata(update_id, values, set_metadata)
     except Exception as e:

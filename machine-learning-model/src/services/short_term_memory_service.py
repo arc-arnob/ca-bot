@@ -38,7 +38,7 @@ def save_to_short_term_memory(raw_conversation_log):
         user_embed = context_encoding(raw_conversation_log)
         unique_id = str(uuid.uuid4())
         current_timestamp = int(time.mktime(datetime.now().timetuple()))
-        metadata = {"BOT":  raw_conversation_log.get('BOT'), "USER": raw_conversation_log.get('USER'), "timestamp": current_timestamp}
+        metadata = {"BOT":  raw_conversation_log.get('BOT'), "USER": raw_conversation_log.get('USER'), "timestamp": current_timestamp, "context": "general_convo"}
         index.upsert([(unique_id, user_embed, metadata)])
 
     except Exception as e:
@@ -88,4 +88,25 @@ def context_encoding(raw_conversation_log):
     return model.encode("When you said " + bot_message + "the user replied " + user_message).tolist()
 
 
+def get_data_for_stm_to_ltm():
+    try:
+        model = SentenceTransformer('all-MiniLM-L6-v2')
+        encoded = model.encode("BIT, USER, QUIZ, PHYSICS, GENERAL").tolist()
+        index_name = 'bot-short-term-memory'
+        pinecone.init(
+            api_key=os.environ.get('pinecone_short_term_mem'),
+            environment="gcp-starter",
+        )
+        index = pinecone.Index(index_name)
+        response = index.query(
+            vector=encoded,
+            top_k=1000,
+            include_values=False,
+            include_metadata = True
+        )
+        return response.to_dict()
 
+    except Exception as e:
+        print(e)
+        error_message = f"An error occurred while fetching recent convo 001x: {str(e)}"
+        raise ShortTermMemoryError(error_message)

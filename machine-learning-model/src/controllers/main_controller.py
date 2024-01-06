@@ -1,7 +1,7 @@
 from flask import request, Response, json, Blueprint
 from ..services.short_term_memory_service import (save_to_short_term_memory, get_recent_conversation_history,
-                                                  ShortTermMemoryError)
-from ..services.long_term_memory_service import (fetch_from_domain_knowledge, KnowledgeFetchError)
+                                                  ShortTermMemoryError, get_data_for_stm_to_ltm)
+from ..services.long_term_memory_service import (fetch_from_domain_knowledge, KnowledgeFetchError, create_or_update_user, stm_to_ltm_migration)
 
 from ..services.predict_context import (predict_context, InferenceError)
 
@@ -121,6 +121,61 @@ def update_rag_user_input_controller():
         update_rag_with_user_response(response)
         return Response(
             response=json.dumps({'status': "success"}),
+            status=200,
+            mimetype='application/json'
+        )
+    except DialogManagerError as e:
+        error_message = str(e)
+        return Response(
+            response=json.dumps({'status': "error", 'message': error_message}),
+            status=500,  # Internal Server Error
+            mimetype='application/json'
+        )
+
+
+@resources.route('/create_update_user', methods=["POST"])
+def create_or_update_user_controller():
+    try:
+        payload = request.json
+        create_or_update_user(payload)
+        return Response(
+            response=json.dumps({'status': "user ltm save success"}),
+            status=200,
+            mimetype='application/json'
+        )
+    except DialogManagerError as e:
+        error_message = str(e)
+        return Response(
+            response=json.dumps({'status': "error", 'message': error_message}),
+            status=500,  # Internal Server Error
+            mimetype='application/json'
+        )
+
+
+@resources.route('/get_all_stm_data', methods=["GET"])
+def get_all_stm_controller():
+    try:
+        response = get_data_for_stm_to_ltm()
+        return Response(
+            response=json.dumps({'data':  response,'status': "user ltm save success"}),
+            status=200,
+            mimetype='application/json'
+        )
+    except DialogManagerError as e:
+        error_message = str(e)
+        return Response(
+            response=json.dumps({'status': "error", 'message': error_message}),
+            status=500,  # Internal Server Error
+            mimetype='application/json'
+        )
+
+
+@resources.route('/move_stm_to_ltm', methods=["GET"])
+def stm_to_ltm_controller():
+    try:
+        stm_to_ltm_migration()
+        return Response(
+            response=json.dumps({'status': "user ltm save success"}),
             status=200,
             mimetype='application/json'
         )
