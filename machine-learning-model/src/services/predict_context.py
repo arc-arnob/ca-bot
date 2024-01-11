@@ -4,6 +4,9 @@ import requests
 STUDY = 'study'
 NOT_STUDY = 'not study'
 
+# Test Sets
+ALGEBRA = 'algebra'
+GEOMETRY = 'geometry'
 
 class InferenceError(Exception):
     pass
@@ -71,6 +74,21 @@ def rag_specific_intents(user_statement):
         prompt = "If the user said: " + user_statement + ". Is the user asking to fetch correct or wrong answers?"
         response = ask_llm(prompt)
         return response
+
+    except InferenceError as ie:
+        print(f"Inference error in rag_specific_intents: {str(ie)}")
+        return {"error": str(ie)}
+
+    except Exception as e:
+        print(f"An unexpected error occurred in rag_specific_intents: {e}")
+        raise InferenceError("Unexpected error in rag_specific_intents")
+
+
+def which_test_set_user_wants(user_statement):
+    try:
+        prompt = f'''Identify if any word from the list ({ALGEBRA}, {GEOMETRY}) is mentioned "{user_statement}". Return the matching word or respond 'none' if there is no match.'''
+        response = ask_llm(prompt)
+        return response[0]['generated_text'].lower()
 
     except InferenceError as ie:
         print(f"Inference error in rag_specific_intents: {str(ie)}")

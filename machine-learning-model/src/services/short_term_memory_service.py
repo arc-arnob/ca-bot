@@ -38,7 +38,7 @@ def save_to_short_term_memory(raw_conversation_log):
         user_embed = context_encoding(raw_conversation_log)
         unique_id = str(uuid.uuid4())
         current_timestamp = int(time.mktime(datetime.now().timetuple()))
-        metadata = {"BOT":  raw_conversation_log.get('BOT'), "USER": raw_conversation_log.get('USER'), "timestamp": current_timestamp, "context": "general_convo"}
+        metadata = {"BOT":  raw_conversation_log.get('BOT'), "USER": raw_conversation_log.get('USER'), "timestamp": current_timestamp, "context": raw_conversation_log['context']}
         index.upsert([(unique_id, user_embed, metadata)])
 
     except Exception as e:

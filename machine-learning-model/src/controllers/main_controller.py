@@ -1,7 +1,7 @@
 from flask import request, Response, json, Blueprint
 from ..services.short_term_memory_service import (save_to_short_term_memory, get_recent_conversation_history,
                                                   ShortTermMemoryError, get_data_for_stm_to_ltm)
-from ..services.long_term_memory_service import (fetch_from_domain_knowledge, KnowledgeFetchError, create_or_update_user, stm_to_ltm_migration)
+from ..services.long_term_memory_service import (fetch_from_domain_knowledge, KnowledgeFetchError, UserLTMSaveError, TopicNotInRAG , create_or_update_user, stm_to_ltm_migration, save_user_quiz_responses_to_ltm)
 
 from ..services.predict_context import (predict_context, InferenceError)
 
@@ -65,6 +65,13 @@ def fetch_from_domain_knowledge_controller():
                 status=200,
                 mimetype='application/json'
             )
+    except TopicNotInRAG as e:
+        error_message = str(e)
+        return Response(
+            response=json.dumps({'status': "Search Fail", 'message': "Oops Topic not found"}),
+            status=200,  # Internal Server Error
+            mimetype='application/json'
+        )
     except KnowledgeFetchError as e:
         error_message = str(e)
         return Response(
@@ -180,6 +187,25 @@ def stm_to_ltm_controller():
             mimetype='application/json'
         )
     except DialogManagerError as e:
+        error_message = str(e)
+        return Response(
+            response=json.dumps({'status': "error", 'message': error_message}),
+            status=500,  # Internal Server Error
+            mimetype='application/json'
+        )
+
+
+@resources.route('/save-user-quiz-res-to-ltm', methods=["POST"])
+def save_user_quiz_responses_to_ltm_controller():
+    try:
+        payload = request.json
+        save_user_quiz_responses_to_ltm(payload)
+        return Response(
+            response=json.dumps({'status': "user ltm save success"}),
+            status=200,
+            mimetype='application/json'
+        )
+    except UserLTMSaveError as e:
         error_message = str(e)
         return Response(
             response=json.dumps({'status': "error", 'message': error_message}),
