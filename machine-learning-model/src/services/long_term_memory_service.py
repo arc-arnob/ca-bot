@@ -1,6 +1,6 @@
 # TODO: Create or update Domain Knowledge - NOT Needed, run from separate Script
 from sentence_transformers import SentenceTransformer, util
-from ..services.short_term_memory_service import get_data_for_stm_to_ltm
+from ..services.short_term_memory_service import get_data_for_stm_to_ltm, clear_stm
 from ..services.predict_context import which_test_set_user_wants, ALGEBRA, GEOMETRY
 import pinecone
 import time
@@ -24,7 +24,7 @@ class TopicNotInRAG(Exception):
     pass
 
 
-def fetch_from_domain_knowledge(query, user_id = 2):
+def fetch_from_domain_knowledge(query, user_id):
     user_wants = which_test_set_user_wants(query)
     if user_wants in [ALGEBRA, GEOMETRY]:
         result = fetch_quiz_data_from_ltm(query, user_wants, user_id)
@@ -148,6 +148,7 @@ def stm_to_ltm_migration():
                 (str(uuid.uuid4()), model.encode("micheal scott related data").tolist(), item['metadata']))
             print(upsert_data)
         index.upsert(upsert_data)
+        clear_stm()
     except Exception as e:
         raise UserLTMSaveError("Error saving knowledge to long term memory.")
 

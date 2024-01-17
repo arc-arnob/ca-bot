@@ -38,7 +38,7 @@ def save_to_short_term_memory(raw_conversation_log):
         user_embed = context_encoding(raw_conversation_log)
         unique_id = str(uuid.uuid4())
         current_timestamp = int(time.mktime(datetime.now().timetuple()))
-        metadata = {"BOT":  raw_conversation_log.get('BOT'), "USER": raw_conversation_log.get('USER'), "timestamp": current_timestamp, "context": raw_conversation_log['context']}
+        metadata = {"BOT":  raw_conversation_log.get('BOT'), "USER": raw_conversation_log.get('USER'), "timestamp": current_timestamp, "context": raw_conversation_log['current_user_context']}
         index.upsert([(unique_id, user_embed, metadata)])
 
     except Exception as e:
@@ -59,9 +59,13 @@ def get_recent_conversation_history(raw_convo, number_of_convo=6):
         index = pinecone.Index(index_name)
         response = index.query(
             vector=encoded_query,
+            filter = {
+                "context": {"$eq": raw_convo['context']}
+            },
             top_k=number_of_convo,
             include_metadata=True
         )
+        print("Recent Convo: ", response)
         return response.to_dict()['matches']
 
     except Exception as e:
@@ -110,3 +114,14 @@ def get_data_for_stm_to_ltm():
         print(e)
         error_message = f"An error occurred while fetching recent convo 001x: {str(e)}"
         raise ShortTermMemoryError(error_message)
+
+
+def clear_stm():
+    index_name = 'bot-short-term-memory'
+    pinecone.init(
+        api_key=os.environ.get('pinecone_short_term_mem'),
+        environment="gcp-starter",
+    )
+    index = pinecone.Index(index_name)
+    index.delete(delete_all=True)
+

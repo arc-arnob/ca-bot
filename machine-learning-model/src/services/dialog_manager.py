@@ -1,4 +1,4 @@
-from ..services.long_term_memory_service import fetch_from_domain_knowledge
+from ..services.long_term_memory_service import fetch_from_domain_knowledge, TopicNotInRAG
 from ..services.predict_context import predict_context, ask_llm
 from ..services.short_term_memory_service import (save_to_short_term_memory, get_recent_conversation_history,
                                                   update_stm_metadata)
@@ -9,17 +9,21 @@ class DialogManagerError(Exception):
 
 
 def lets_talk(raw_conversation):
-    # Store to Short Term Memory
-    save_to_short_term_memory(raw_conversation)
     # Predict Context
     user_intent = predict_context(raw_conversation['USER'])
     # if Study, fetch RAG
     domain_knowledge = None
-    if user_intent['rag_fetch'] == 'yes':
-        domain_knowledge = fetch_from_domain_knowledge(raw_conversation['USER'])
+    try:
+        if user_intent['rag_fetch'] == 'yes':
+            domain_knowledge = fetch_from_domain_knowledge(raw_conversation['USER'], raw_conversation['user_id'])
+    except TopicNotInRAG:
+        domain_knowledge = None
+    # TODO: Get recent Conversations based on just
     recent_convos = get_recent_conversation_history(raw_conversation)
     # Else Get last few convos and Reply to most resent user conversation
     generated_dialog = generate_dialog(raw_conversation, user_intent, domain_knowledge, recent_convos)
+    # Store to Short Term Memory
+    save_to_short_term_memory(raw_conversation)
     return generated_dialog
 
 
