@@ -32,6 +32,42 @@ def ask_llm(payload):
         raise InferenceError("Unexpected error")
 
 
+def ask_llm_advanced_without_memory(user_conversation):
+    try:
+        api_url = 'https://api.openai.com/v1/chat/completions'
+        headers = {"Authorization": "Bearer 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"}
+        payload = generate_quiz_message(user_conversation)
+        response = requests.post(api_url, headers=headers, json=payload)
+        response.raise_for_status()
+        formatted_response = response.json()['choices'][0]['message']['content']
+        return formatted_response
+    except Exception as e:
+        print(f"An unexpected error occurred open: {e}")
+        raise InferenceError("Unexpected error open")
+
+
+def generate_quiz_message(user_content):
+    chat_message = {
+        "model": "gpt-3.5-turbo",
+        "messages": [
+            {
+                "role": "system",
+                "content": "You are a Quizzing bot that quizzes students and also cares about their emotional state. You do not have a questions and will be provided externally. Respond in less than 10 words. Do not ask questions"
+            },
+            {
+                "role": "user",
+                "content": user_content
+            }
+        ]
+    }
+
+    return chat_message
+
+
+def generate_llm_prompt_from_stm(user_conversation_history):
+    pass
+
+
 def predict_context(raw_conversation):
     try:
         prompt = (f"If you said ${raw_conversation}. which one out of ${STUDY} or ${NOT_STUDY} does the intent of the "
