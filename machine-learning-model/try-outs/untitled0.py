@@ -7,38 +7,15 @@ Created on Sat Dec 23 12:20:45 2023
 """
 
 # Setup
-from datasets import load_dataset
 import os
 from langchain.vectorstores import Pinecone
 # Pine Code Vector DB setup
 import pinecone
-import os
-from dotenv import load_dotenv
-load_dotenv()
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 # Embeddings
 from langchain.embeddings import HuggingFaceEmbeddings
 
 import json
-
-dataset = load_dataset("math_qa", split="train")
-
-
-#%%
-# Specify the path to your JSON file
-import json
-json_file_path = 'dataset.json'
-
-# Open the JSON file and load the data
-with open(json_file_path, 'r') as json_file:
-    data = json.load(json_file)
-
-# Now 'data' contains the content of your JSON file as a Python data structure
-print(data)
-
-#%%
-print(dataset[0])
-df = dataset.to_pandas()
 
 #%% Preparing Knowldege Data from Embedding
 import json
@@ -67,13 +44,11 @@ query_embedding = model.encode('Ask me a question from gain topic')
 passage_embedding = model.encode(prompts)
 
 # %%
-similarity = util.dot_score(query_embedding, passage_embedding)
-print("Similarity:", util.dot_score(query_embedding, passage_embedding)[0][3]) 
 
 #%%
 # get API key from app.pinecone.io and environment from console
 pinecone.init(
-    api_key=os.environ.get('pinecone_long_term_mem'),
+    api_key="bac9d10e-b651-4414-8dd2-1bd94da6b85d",
     environment="gcp-starter",
 )
 
@@ -118,6 +93,82 @@ for i in tqdm(range(0, len(data), batch_size)):
     ]
     index.upsert(vectors=zip(ids, passage_embedding, metadata))
 
+
+
+
+# %%
+
+#%%
+# Specify the path to your JSON file
+import json
+json_file_path = 'dataset.json'
+
+js_data = None
+
+# Open the JSON file and load the data
+with open(json_file_path, 'r') as json_file:
+    js_data = json.load(json_file)
+
+# Now 'data' contains the content of your JSON file as a Python data structure
+
+for dat in js_data:
+    print("DATA: ")
+    print(dat)
+
+# %%
+json_data = data  # List of dictionaries representing your JSON data
+
+for x in json_data:
+    print(x)
+    ids = [f"{x['question_id']}"]
+    text_to_embed = [
+        f"Question: {x['question']}\nHint: {x['hint']}\nOptions: {x['options']}\nCorrect Answer: {x['correct']}\nCategory: {x['topic']}\nExplanation: {x['explanation']}"
+    ]
+    passage_embedding = model.encode(text_to_embed).tolist()
+    metadata = [
+        {
+            'question_id': x['question_id'],
+            'topic_id': x['topic_id'],
+            'topic': x['topic'],
+            'category': x['topic'],
+            'question': x['question'],
+            'hint': x['hint'],
+            'correct': x['correct'],
+            'explanation': x['explanation'],
+            'options': x['options']
+        }
+    ]
+    index.upsert(vectors=zip(ids, passage_embedding, metadata))
+    
+
+#%%
+# %% 
+from tqdm.auto import tqdm  # for progress bar
+batch_size = 10
+data = js_data
+
+for i in tqdm(range(0, len(data), batch_size)):
+    i_end = min(len(data), i+batch_size)
+    batch = data.iloc[i:i_end]
+    ids = [f"{x['topic']}" for i, x in batch.iterrows()]
+    text_to_embed = [
+            f"Question: {x['question']}\nHint: {x['hint']}\nOptions: {x['options']}\nCorrect Answer: {x['correct']}\nCategory: {x['topic']}\nExplanation: {x['explanation']}" for _, dataset in batch.iterrows()
+        ]
+    passage_embedding = model.encode(text_to_embed).tolist()
+    metadata = [
+        {
+            'question_id': x['question_id'],
+            'topic_id': x['topic_id'],
+            'topic': x['topic'],
+            'category': x['topic'],
+            'question': x['question'],
+            'hint': x['hint'],
+            'correct': x['correct'],
+            'explanation': x['explanation'],
+            'options': x['options']
+        } for i, x in batch.iterrows()
+    ]
+    index.upsert(vectors=zip(ids, passage_embedding, metadata))
 
 
 # %%
