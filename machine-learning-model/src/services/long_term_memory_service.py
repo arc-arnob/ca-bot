@@ -73,12 +73,21 @@ def fetch_quiz_data_from_knowledge_base(query):
             include_metadata=True,
             include_values=True
         )
-        return res.to_dict()
+        formatted_questionnaire = format_output(res.to_dict()['matches'])
+        return formatted_questionnaire
     except Exception as e:
         # You can log the error or handle it based on your requirements
         print(f"An error occurred: {str(e)}")
         raise KnowledgeFetchError("Error fetching knowledge from domain knowledge.")
 
+
+def format_output(matches):
+    formatted_data = []
+    print(matches)
+    for data in matches:
+        formatted_data.append(data['metadata'])
+
+    return formatted_data
 
 # TODO: Store User Meta in Long Term
 def create_or_update_user(payload):
