@@ -1,5 +1,5 @@
 from ..services.long_term_memory_service import fetch_from_domain_knowledge, TopicNotInRAG
-from ..services.predict_context import predict_context, ask_llm
+from ..services.predict_context import predict_context, ask_llm, stm_llm_talk
 from ..services.short_term_memory_service import (save_to_short_term_memory, get_recent_conversation_history,
                                                   update_stm_metadata)
 
@@ -29,12 +29,11 @@ def lets_talk(raw_conversation):
 
 def generate_dialog(user_conversation, user_intent, domain_knowledge, recent_convos):
     knowledge = prompt_ready_recent_conversation(recent_convos)
-    augmented_prompt = ".Use the above information to respond to the message: "
-    prompt = "Below are some of the most relevant interactions from this chat: " + knowledge + " " + augmented_prompt + " " + user_conversation['USER']
-    generated_dialog = ask_llm(prompt)
+    #augmented_prompt = ".Use the above information to respond to the message: "
+    #prompt = "Below are some of the most relevant interactions from this chat: " + knowledge + " " + augmented_prompt + " " + user_conversation['USER']
+    generated_dialog = stm_llm_talk(knowledge)
     return {
-        "prompt": prompt,
-        "generated_text": generated_dialog,
+        "generated_dialog": generated_dialog,
         "domain_knowledge": domain_knowledge,
         "user_intent": user_intent
     }
@@ -43,16 +42,32 @@ def generate_dialog(user_conversation, user_intent, domain_knowledge, recent_con
 def prompt_ready_recent_conversation(recent_convos):
     # Combine BOT and USER messages from recent conversations
     conversation_strings = []
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a Quizzing bot that quizzes students and also cares about their emotional state. You do not have a questions and will be provided externally. Respond in less than 10 words. Do not ask questions"
+        },
+    ]
 
     for convo in recent_convos:
         bot_message = convo["metadata"]["BOT"]
         user_message = convo["metadata"]["USER"]
-        conversation_strings.append(f"BOT: {bot_message} USER: {user_message}")
+        bot_chat = {
+            "role": "system",
+            "content": bot_message
+        }
+        user_chat = {
+            "role": "user",
+            "content": user_message
+        }
+        # conversation_strings.append(f"BOT: {bot_message} USER: {user_message}")
+        messages.append(bot_chat)
+        messages.append(user_chat)
 
     # Combine all conversation strings into a single prompt
-    full_prompt = "\n".join(conversation_strings)
+    # full_prompt = "\n".join(conversation_strings)
 
-    return full_prompt
+    return messages
 
 
 def update_rag_with_user_response(quiz_payload):

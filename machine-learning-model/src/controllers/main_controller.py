@@ -3,7 +3,7 @@ from ..services.short_term_memory_service import (save_to_short_term_memory, get
                                                   ShortTermMemoryError, get_data_for_stm_to_ltm, clear_stm)
 from ..services.long_term_memory_service import (fetch_from_domain_knowledge, KnowledgeFetchError, UserLTMSaveError, TopicNotInRAG , create_or_update_user, stm_to_ltm_migration, save_user_quiz_responses_to_ltm)
 
-from ..services.predict_context import (predict_context, InferenceError)
+from ..services.predict_context import (predict_context, InferenceError, ask_llm_advanced_without_memory)
 
 from ..services.dialog_manager import lets_talk, DialogManagerError, update_rag_with_user_response
 
@@ -230,3 +230,23 @@ def clear_stm_controller():
             status=500,  # Internal Server Error
             mimetype='application/json'
         )
+
+
+@resources.route('/ask_llm_wo_mem', methods=['POST'])
+def ask_llm_wo_meme():
+    try:
+        raw_conversation = request.json
+        response = ask_llm_advanced_without_memory(raw_conversation['user'])
+        return Response(
+            response=json.dumps({'data':  response,'status': "LM response"}),
+            status=200,
+            mimetype='application/json'
+        )
+    except Exception as e:
+        error_message = str(e)
+        return Response(
+            response=json.dumps({'status': "error", 'message': error_message}),
+            status=500,  # Internal Server Error
+            mimetype='application/json'
+        )
+
