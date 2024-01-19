@@ -1,7 +1,7 @@
 # TODO: Create or update Domain Knowledge - NOT Needed, run from separate Script
 from sentence_transformers import SentenceTransformer, util
 from ..services.short_term_memory_service import get_data_for_stm_to_ltm, clear_stm
-from ..services.predict_context import which_test_set_user_wants, ALGEBRA, GEOMETRY
+from ..services.predict_context import which_test_set_user_wants, ALGEBRA, GEOMETRY, PERCENTAGES, BODMAS, PROFITLOSS
 import pinecone
 import time
 import uuid
@@ -26,12 +26,16 @@ class TopicNotInRAG(Exception):
 
 def fetch_from_domain_knowledge(query, user_id):
     user_wants = which_test_set_user_wants(query)
-    if user_wants in [ALGEBRA, GEOMETRY]:
+    print(user_wants)
+    print(query)
+    if user_wants in [ALGEBRA, GEOMETRY, BODMAS, PROFITLOSS, PERCENTAGES]:
         result = fetch_quiz_data_from_ltm(query, user_wants, user_id)
-        if len(result['matches']) > 0:
+        print(result)
+        if len(result) > 0:
+            print("here 1")
             return result
         else:
-            result_2 = fetch_quiz_data_from_knowledge_base(query)
+            result_2 = fetch_quiz_data_from_knowledge_base(query, user_wants)
             return result_2
     else:
         raise TopicNotInRAG()
@@ -44,20 +48,21 @@ def fetch_quiz_data_from_ltm(query, user_test_topic, user_id):
         api_key=os.environ.get('pinecone_ltm'),
         environment="gcp-starter",
     )
+    print(user_id, user_test_topic, query)
     index = pinecone.Index(index_name)
-    query = 'user test'
+    query = "User " + str(user_id)
     response = index.query(model.encode(query).tolist(),
                            filter={
                                "topic": {"$eq": user_test_topic},
-                               "user_id": {"$eq": user_id},
+                               "user_id": int(user_id),
                            },
                            top_k=10,
                            include_metadata=True
                            )
-    return response.to_dict()
+    return format_output(response.to_dict()['matches'])
 
 
-def fetch_quiz_data_from_knowledge_base(query):
+def fetch_quiz_data_from_knowledge_base(query, topic):
     try:
         pinecone.init(
             api_key=os.environ.get('pinecone_long_term_mem'),
@@ -71,7 +76,10 @@ def fetch_quiz_data_from_knowledge_base(query):
             vector=encoded_query,
             top_k=15,
             include_metadata=True,
-            include_values=True
+            include_values=True,
+            filter={
+                "topic": {"$eq": topic},
+            },
         )
         formatted_questionnaire = format_output(res.to_dict()['matches'])
         return formatted_questionnaire

@@ -116,7 +116,7 @@ for dat in js_data:
     print(dat)
 
 # %%
-json_data = data  # List of dictionaries representing your JSON data
+json_data = js_data  # List of dictionaries representing your JSON data
 
 for x in json_data:
     print(x)
