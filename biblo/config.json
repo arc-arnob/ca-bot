@@ -9,7 +9,7 @@
         "2": "Welcome back {{NAME}}! Are you excited to learn today?"
     },
     "TOPICS":{
-        "1": "Is there any particular topic you would like to be quizzed on. I can ask you questions on Algebra, Geometry, Gain, Percentages, General",
+        "1": "Is there any particular topic you would like to be quizzed on. I can ask you questions on Algebra, Geometry, Profit and Loss, Percentages, General",
         "2": "I didn't get that, shall we go ahead with General Questions?",
         "3": "Okay, we shall be studying {{TOPIC}} today"
     },
@@ -25,8 +25,8 @@
     },
     "UNCLEAR_DIALOGUE":["I'm sorry, I didn't catch that.", "Can you please repeat?", "Pardon me? Could you come again?"],
     "NO_DIALOGUE":"Are you still there?",
-    "TO_STOP":"Do you want to stop?",
-    "GENERAL_TO_QUIZ_DIALOGUE":"I hear you, but do you want to get back to the questions?",
+    "TO_STOP":"Do you want to stop the session?",
+    "GENERAL_TO_QUIZ_DIALOGUE":"Do you want to get back to the questions?",
     "SESSION_END_DIALOGUE":"You have reached the end of the session. You got {{CORRECT}} questions right and {{INCORRECT}} wrong. {{PERFORMANCE_SPECIFIC}}. Thanks and have a nice day! Goodbye",
     "SESSION_END_NO_SCORE": "You have reached the end of the session. Thanks and have a nice day! Goodbye",
     "PERFORMANCE_SPECIFIC_DIALOGUE":{
@@ -46,14 +46,16 @@
         "NAME":"What is the name of the person saying the following? {{DIALOGUE}}",
         "YES_NO": "Answer yes/no whether the following statement is affirmative? {{DIALOGUE}}",
         "TOPIC": "What does the user want to study if they say the following? {{DIALOGUE}}",
-        "COHERENT_DIALOGUE": "Answer yes/no whether the following sentence is coherent. {{DIALOGUE}}",
-        "EMOTION_DIALOGUE": "The user got a mathematics question {{RIGHT/WRONG}} and is showing {{EMOTION}} emotion. Answer yes/no whether user needs a break? ",
-        "EMOTION_EXPRESSION": "The user got a mathematics question {{RIGHT/WRONG}} and is showing {{EMOTION}} emotion. Please give a suitable facial expression out of the following: Smile, Frown, Sadness, Surprise, Curiosity.",
-        "GENERAL_TALK": "Give a casual response for when a person says the following: {{DIALOGUE}}",
-        "END_SESSION": "Does the user want to stop if they say the following: {{DIALOGUE}}"
+        "COHERENT_DIALOGUE": "Answer yes/no whether the following dialogue is coherent. {{DIALOGUE}}",
+        "EMOTION_DIALOGUE": "The user got a mathematics question {{RIGHT/WRONG}} and is showing {{EMOTION}} emotion. Answer yes/no/maybe if user needs a break? ",
+        "EMOTION_EXPRESSION": "I got mathematics question {{RIGHT/WRONG}} and am showing {{EMOTION}} emotion. Give a suitable facial expression out of the following: Smile, Frown, Sadness, Surprise, Curiosity.",
+        "GENERAL_TALK": "{{DIALOGUE}}. I feel {{EMOTION}}",
+        "SWITCH_TO_STUDY": "Answer yes/no whether I am agreeing if I say the following: {{DIALOGUE}}",
+        "END_SESSION": "Do I want to stop the session if I say the following, answer yes/no: {{DIALOGUE}}"
     },
     "LIST_OF_TOPICS":["geometry","algebra","general","gain","percentages"],
-    "TOTAL_QUESTIONS":5,
+    "LIST_OF_TOPICS_RAG":["geometry","algebra","bodmas","profit_and_loss","percentages"],
+    "TOTAL_QUESTIONS":3,
     "WAIT_TIME_FOR_HINT":45,
     "WAIT_TIME_TO_REPEAT":20,
     "WAIT_TIME_FOR_ENDING_SESSION":300

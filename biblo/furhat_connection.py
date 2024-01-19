@@ -41,8 +41,8 @@ class FurhatConnection:
         if not result.success or not result.message:
             user_dialogue = self.ask_again("no_dialog")
         else:
-            is_coherent = self.prompter.prompt_generator_dialogue(result.message, "COHERENT_DIALOGUE")
-            print(is_coherent)
+            # is_coherent = self.prompter.prompt_generator_dialogue(result.message, "COHERENT_DIALOGUE")
+            # print(is_coherent)
             is_coherent = 'yes'
             if is_coherent == 'yes':
                 return True, result.message
@@ -52,9 +52,9 @@ class FurhatConnection:
         if not user_dialogue.success or not user_dialogue.message:
             return False, ""
         else:
-            is_coherent = self.prompter.prompt_generator_dialogue(result.message, "COHERENT_DIALOGUE")
-            print(is_coherent)
-            is_coherent = 'yes' #temporary since llm is giving no always
+            # is_coherent = self.prompter.prompt_generator_dialogue(result.message, "COHERENT_DIALOGUE")
+            # print(is_coherent)
+            is_coherent = 'yes'
             if is_coherent == 'yes':
                 return True, user_dialogue.message
             else:

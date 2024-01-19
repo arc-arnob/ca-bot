@@ -23,7 +23,7 @@ class FurhatConnection:
         self.prompter = PromptGenerator(llm)
         self.dialogue = {}
 
-    def furhat_listen(self, timeout=15, to_check = True):
+    def furhat_listen(self, timeout=15, to_check = True, context = "study", current_user_context = "study", user_id = 0):
         result = Status()
         start_time = time.time()
         while not result.message and time.time() - start_time < timeout:
@@ -32,14 +32,19 @@ class FurhatConnection:
         if to_check:
             is_dialogue, dialogue = self.check_response(result)
             if is_dialogue:
-                self.dialogue["USER"] = dialogue
-                #send self.dialogue to STM
-                self.dialogue = {}
+                if context != "study":
+                    self.dialogue["USER"] = dialogue
+                    self.dialogue["context"] = context
+                    self.dialogue["current_user_context"] = current_user_context
+                    self.dialogue["user_id"] = user_id
+                    print("STM Dialogue: ", self.dialogue)
+                    self.send_to_stm()
+                    self.dialogue = {}
                 return dialogue
             else:
                 return
         else:
-            self.dialogue["USER"] = dialogue
+            self.dialogue["USER"] = result.message
             return result
 
 
@@ -79,22 +84,24 @@ class FurhatConnection:
         
     
     def furhat_speak(self, speech, context = "study", block_flag = True):
-        self.dialogue["context"] = context
-        if not self.dialogue["BOT"]:
-            self.dialogue["BOT"] = speech
-        else:
-            self.dialogue["BOT"] = self.dialogue["BOT"] + ". " + speech
+        if context != "study":
+            self.dialogue["context"] = context
+            if not "BOT" in self.dialogue:
+                self.dialogue["BOT"] = speech
+            else:
+                self.dialogue["BOT"] = self.dialogue["BOT"] + ". " + speech
         self.furhat.say(text=speech, blocking=block_flag)
 
-
-
     def furhat_gesture(self, gesture):
-        if gesture in self.gestures.keys:
+        if gesture in self.gestures:
             gesture_name = self.gestures[gesture]
             self.furhat.gesture(name=gesture_name)
         else:
             self.furhat.gesture(name=self.gestures["default"])
     
+    def send_to_stm(self):
+        pass
+
     def furhat_end_session(self):
         self.furhat.say(text=self.end_dialog, blocking=True)
 

@@ -43,9 +43,13 @@ class DBConn():
     
     def exit_user(self, user_id):
         if user_id:
-            self.cur.execute(f"UPDATE users SET current_user = 0 WHERE userid = {user_id};")
+            self.cur.execute(f"UPDATE users SET current_user = 1 WHERE userid = {user_id};")
             self.db_conn.commit()
             return
+
+    def fetch_all(self):
+        res = self.cur.execute(f"SELECT * FROM users").fetchall()
+        return(res)
 
     def close_connection(self):
         self.db_conn.commit()
@@ -55,11 +59,13 @@ class DBConn():
 if __name__ == '__main__':
     conn = DBConn()
     # conn.db_create_and_insert_dummy()
-    res, new_user = conn.fetch_current_user()
+    # res, new_user = conn.fetch_current_user()
+    res = conn.fetch_all()
     print(res)
-    print(new_user)
-    conn.fetch_emotion(1)
-    # conn.update_name(1,"PLACEHOLDER")
+    # print(new_user)
+    # conn.fetch_emotion(1)
+    # conn.exit_user(1)
+    # conn.update_name(1,"Bob")
     # res, new_user = conn.fetch_current_user()
     # print(res)
     # print(new_user)

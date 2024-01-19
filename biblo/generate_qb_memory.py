@@ -1,6 +1,9 @@
 import json
 import random
+import requests
 from read_json_config import read_json
+
+BASE_URL = "http://127.0.0.1:3000/api/v1"
 """
 {
 "Q1":{"question":"",
@@ -15,11 +18,27 @@ from read_json_config import read_json
 }
 
 """
-def generate_qb_topic(topic="BODMAS"):
+
+def make_api_call(route, method, data):
+    url = f"{BASE_URL}/{route}"
+
+    if method == "GET":
+        response = requests.get(url)
+    elif method == "POST":
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(url, json=data, headers=headers)
+    else:
+        raise ValueError("Invalid HTTP method")
+    return response.json()["data"]
+
+
+def generate_qb_topic(user_id, topic="BODMAS"):
     #fetch from RAG
-    question_bank = open("sample_questions.json").read()
-    question_bank = json.loads(question_bank)
+    route = "get_domain_knowledge"
+    payload = {"user":f"Ask me questions about {topic}", "user_id":user_id}
+    question_bank = make_api_call(route, "POST", payload)
     no_of_questions = read_json("TOTAL_QUESTIONS")
+    print(question_bank)
     
     previous_questions = []
     prev_incorrect_questions = []
@@ -41,14 +60,7 @@ def generate_qb_topic(topic="BODMAS"):
 
     return ask_questions
 
-def qb_other_topics(topic="BODMAS"):
-    question_bank = open("sample_questions.json").read()
-    question_bank = json.loads(question_bank)
-    
-    prev_incorrect_questions = []
-    for question in question_bank:
-        if "is_correct" in question and not question["is_correct"] and question["topic"]!=topic:
-            prev_incorrect_questions.append(question)
+if __name__ == "__main__":
+    # generate_qb_topic(1, "profit and loss")
+    generate_qb_topic(1, "algebra")
 
-    return prev_incorrect_questions
-    

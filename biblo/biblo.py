@@ -7,8 +7,6 @@ from ui import render_ui, show_evaluation, session_start
 from generate_qb import generate_qb_topic
 import random
 import math
-import sys
-
 
 class Biblo:
     def __init__(self) -> None:
@@ -28,12 +26,12 @@ class Biblo:
                 self.furhat_conn.furhat_speak(intro_template["1"])
                 self.furhat_conn.furhat_speak(intro_template["2"])
                 user_dialogue = self.furhat_conn.furhat_listen()
-                user_name = self.prompter.prompt_generator_dialogue(user_dialogue, "NAME")
+                user_name = self.prompter.prompt_generator_dialogue(user_dialogue, "NAME", "FLAN")
                 self.sql_conn.update_name(self.user_id,user_name)
                 self.user_name = user_name
                 bot_dialogue = fill_template(["NAME"], [user_name], intro_template["3"])
             
-            elif not new_user:
+            else:
                 intro_template = read_json("INTRODUCTION_RETURNING_USER")
                 self.furhat_conn.furhat_speak(intro_template["1"])
                 self.user_name = user[1]  # get name from response
@@ -42,7 +40,7 @@ class Biblo:
             self.furhat_conn.furhat_speak(bot_dialogue)
             user_dialogue = self.furhat_conn.furhat_listen()
             study_flag = self.prompter.prompt_generator_dialogue(user_dialogue, "YES_NO")
-            print("Study flag: ",study_flag)
+            print("Study flag: ", study_flag)
             
             if study_flag == 'yes':
                 return True
@@ -57,17 +55,21 @@ class Biblo:
             topic_templates = read_json("TOPICS")
             self.furhat_conn.furhat_speak(topic_templates["1"])
             user_dialogue = self.furhat_conn.furhat_listen()
-            topic_chosen = self.prompter.prompt_generator_dialogue(user_dialogue, "TOPIC")
+            topic_chosen = self.prompter.prompt_generator_dialogue(user_dialogue, "TOPIC","FLAN")
+            if "profit" in topic_chosen:
+                topic_chosen = "gain"
             if topic_chosen not in read_json("LIST_OF_TOPICS"):
                 self.furhat_conn.furhat_speak(topic_templates["2"])
                 user_dialogue = self.furhat_conn.furhat_listen()
                 topic_flag = self.prompter.prompt_generator_dialogue(user_dialogue, "YES_NO")
                 if topic_flag == 'yes':
-                    topic_chosen = "BODMAS"
+                    topic_chosen = "bodmas"
                 else:
-                    topic_chosen = self.prompter.prompt_generator_dialogue(user_dialogue, "TOPIC")
+                    topic_chosen = self.prompter.prompt_generator_dialogue(user_dialogue, "TOPIC", "FLAN")
+                    if "profit" in topic_chosen:
+                        topic_chosen = "gain"
                     if topic_chosen not in read_json("LIST_OF_TOPICS"):
-                        topic_chosen = "BODMAS"
+                        topic_chosen = "bodmas"
                     
             bot_dialogue = fill_template(["TOPIC"], [topic_chosen], topic_templates["3"])
             self.furhat_conn.furhat_speak(bot_dialogue)
@@ -78,6 +80,7 @@ class Biblo:
         
     def quiz(self, topic_chosen):
         context = "quiz"
+        to_study = True
         correct_questions, incorrect_questions = 0,0
         total_questions = read_json("TOTAL_QUESTIONS")
         emotion_prompts = read_json("PROMPTS")
@@ -110,22 +113,21 @@ class Biblo:
                     incorrect_questions += 1
                     # render on UI, incorrect answer
                     self.furhat_conn.furhat_speak(random.choice(quiz_dialogue["INCORRECT_ANSWER"]))
+                    self.furhat_conn.furhat_speak(f"The correct answer is {question['correct']}, you answered {question['choice']}")
                     if incorrect_questions >= math.floor(total_questions/2):
                         self.furhat_conn.furhat_speak(random.choice(quiz_dialogue["MANY_INCORRECT_ANSWERS"]))
                 
                 show_evaluation(is_correct, question)
                 
-                #detect emotion
-                emotion = self.sql_conn.fetch_emotion(self.user_id)
-                if emotion == "" or emotion == None:
-                    emotion = "Neutral"
+                emotion = self.detect_emotion()
+
                 user_answer = "correct" if is_correct else "incorrect"
-                llm_prompt = fill_template(["RIGHT/WRONG","EMOTION"], [user_answer, emotion], emotion_prompts["EMOTION_EXPRESSION"])
-                llm_resp = self.llm.ask_llm(llm_prompt) 
+                llm_prompt = fill_template(["RIGHT/WRONG", "EMOTION"], [user_answer, emotion], emotion_prompts["EMOTION_EXPRESSION"])
+                llm_resp = self.llm.ask_llm_openai(llm_prompt)
                 self.furhat_conn.furhat_gesture(llm_resp)
 
                 if is_correct:
-                    self.furhat_conn.furhat_speak("Would you like to hear the working?")
+                    self.furhat_conn.furhat_speak("Would you like to hear the working?", block_flag = True)
                     user_dialogue = self.furhat_conn.furhat_listen()
                     explanation_wanted = self.prompter.prompt_generator_dialogue(user_dialogue, "YES_NO")
                     if explanation_wanted == 'yes':
@@ -133,11 +135,9 @@ class Biblo:
                 else:
                     self.furhat_conn.furhat_speak(question["explanation"])
 
-                # add another block here, with furhat asking if the user understood and get from LLM with memory. User can say something like "I didn't get it still" and should get an answer
-                
-                llm_prompt = fill_template(["RIGHT/WRONG","EMOTION"], [user_answer, emotion], emotion_prompts["EMOTION_DIALOGUE"])
-                llm_resp = self.llm.ask_llm(llm_prompt)
-                if llm_resp == 'yes':
+                llm_prompt = fill_template(["RIGHT/WRONG", "EMOTION"], [user_answer, emotion], emotion_prompts["EMOTION_DIALOGUE"])
+                llm_resp = self.llm.ask_llm_openai(llm_prompt)
+                if llm_resp.strip().lower() in ["yes", "maybe"]:
                     self.furhat_conn.furhat_speak(f"Do you want to take a break? {self.user_name}")
                     user_dialogue = self.furhat_conn.furhat_listen()
                     break_wanted = self.prompter.prompt_generator_dialogue(user_dialogue, "YES_NO")
@@ -148,14 +148,54 @@ class Biblo:
                 if not to_study:
                     break
             
-            return correct_questions, incorrect_questions                    
-# if session terminates midway, have the finally block setup properly
-# in biblo memory, add another block to ask to revise incorrect questions from other topics if any
+            return correct_questions, incorrect_questions
 
         except Exception as e:
             raise Exception(e)
-    
-    def session_end(self, correct_questions,incorrect_questions): 
+
+    def detect_emotion(self):
+        emotion = self.sql_conn.fetch_emotion(self.user_id)
+        if emotion in ["", "Fearful", "Disgusted"] or emotion is None:
+            emotion = "Neutral"
+        elif emotion in ["Angry", "Sad"]:
+            emotion = "Sad"
+        elif emotion in ["Happy", "Surprised"]:
+            emotion = "Happy"
+        return emotion
+
+    def general_talk(self):
+        try:
+            bot_dialogue = random.choice(read_json("GENERAL_TALK"))
+            prompt_list = read_json("PROMPTS")
+            self.furhat_conn.furhat_speak(bot_dialogue)
+            dialog_length = 0
+            while True:
+                user_dialogue = self.furhat_conn.furhat_listen()
+                dialog_length += 1
+                emotion = self.detect_emotion()
+                general_talk_prompt = fill_template(["DIALOGUE", "EMOTION"], [user_dialogue, emotion], prompt_list["GENERAL_TALK"])
+                print(general_talk_prompt)
+                bot_dialogue = self.prompter.prompt_generator(general_talk_prompt)
+                self.furhat_conn.furhat_speak(bot_dialogue)
+                if not dialog_length % 3:
+                    bot_dialogue = read_json("GENERAL_TO_QUIZ_DIALOGUE")
+                    self.furhat_conn.furhat_speak(bot_dialogue)
+                    user_dialogue = self.furhat_conn.furhat_listen()
+                    to_study = self.prompter.prompt_generator_dialogue(user_dialogue, "SWITCH_TO_STUDY")
+                    if to_study == 'yes':
+                        return True
+                    else:
+                        bot_dialogue = read_json("TO_STOP")
+                        self.furhat_conn.furhat_speak(bot_dialogue)
+                        user_dialogue = self.furhat_conn.furhat_listen()
+                        to_end = self.prompter.prompt_generator_dialogue(user_dialogue, "END_SESSION")
+                        if to_end == 'yes':
+                            return False
+
+        except Exception as e:
+            raise Exception(e)
+
+    def session_end(self, correct_questions,incorrect_questions):
         if correct_questions > incorrect_questions:
             performance = str(correct_questions-incorrect_questions)
         else:
@@ -163,40 +203,9 @@ class Biblo:
         performance_specific = read_json("PERFORMANCE_SPECIFIC_DIALOGUE")[performance]
         bot_dialogue = fill_template(["CORRECT", "INCORRECT", "PERFORMANCE_SPECIFIC"], [str(correct_questions), str(incorrect_questions), performance_specific], read_json("SESSION_END_DIALOGUE"))
         self.furhat_conn.furhat_speak(bot_dialogue)
-        return
-
-    def general_talk(self):
-        try:
-            bot_dialogue = random.choice(read_json("GENERAL_TALK"))
-            self.furhat_conn.furhat_speak(bot_dialogue)
-            dialog_length = 0
-            while True:
-                user_dialogue = self.furhat_conn.furhat_listen()
-                dialog_length += 1
-                # if user says I don't want to do this, stop
-                to_end = self.prompter.prompt_generator_dialogue(user_dialogue, "END_SESSION")
-                if to_end == 'yes':
-                    return False
-                bot_dialogue = self.prompter.prompt_generator_dialogue(user_dialogue,"GENERAL_TALK")
-                self.furhat_conn.furhat_speak(bot_dialogue)
-                if not dialog_length%3:
-                    #if user is asking a question, don't append this, else do
-                    bot_dialogue = read_json("GENERAL_TO_QUIZ_DIALOGUE")
-                    self.furhat_conn.furhat_speak(bot_dialogue)
-                    user_dialogue = self.furhat_conn.furhat_listen()
-                    to_study = self.prompter.prompt_generator_dialogue(user_dialogue, "YES_NO")
-                    if to_study == 'yes':
-                        return True
-                    else:
-                       bot_dialogue = self.prompter.prompt_generator_dialogue(user_dialogue,"GENERAL_TALK")
-                       self.furhat_conn.furhat_speak(bot_dialogue) 
-
-        except Exception as e:
-            raise Exception(e)
     
     def talk(self):
         try:
-            
             session_start()
             to_study = self.introduce()
             if not to_study:
