@@ -75,6 +75,22 @@ def ask_llm_ad(ask_prompt, prompt):
         raise InferenceError("Unexpected error open")
 
 
+def stm_llm_talk(message):
+    try:
+        api_url = 'https://api.openai.com/v1/chat/completions'
+        headers = {"Authorization": "Bearer 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"}
+        payload = {
+            "model": "gpt-3.5-turbo",
+            "messages": message
+        }
+        response = requests.post(api_url, headers=headers, json=payload)
+        response.raise_for_status()
+        formatted_response = response.json()['choices'][0]['message']['content']
+        return formatted_response
+    except Exception as e:
+        print(f"An unexpected error occurred open: {e}")
+        raise InferenceError("Unexpected error open")
+
 def generate_quiz_message(user_content):
     chat_message = {
         "model": "gpt-3.5-turbo",
