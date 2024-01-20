@@ -89,7 +89,7 @@ def show_evaluation(is_correct, question):
     options = options.replace("[","")
     options = options.replace("]","")
     if(is_correct):
-        messagebox.showinfo('Result', f'Question: {question["question"]}\nOptions: {options}\nCorrect! Well done.')
+        messagebox.showinfo('Result', f'Correct! Well done.')
     else:
         messagebox.showinfo('Result', f'Question: {question["question"]}\n Options: {options}\n Incorrect. The correct answer is {question["correct"]}. You chose {question["choice"]}')
     root.destroy()

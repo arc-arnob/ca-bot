@@ -1,52 +1,56 @@
-from furhat_connection import FurhatConnection
+from furhat_connection_memory import FurhatConnection
 from generate_prompt import PromptGenerator
 from query_llm import AskLLM
 from db_conn import DBConn
 from read_json_config import read_json, fill_template
 from ui import render_ui, show_evaluation, session_start
-from generate_qb import generate_qb_topic
+from generate_qb_memory import generate_qb_topic, make_api_call
 import random
 import math
+import uuid
+
 
 class Biblo:
     def __init__(self) -> None:
         self.llm = AskLLM()
         self.furhat_conn = FurhatConnection(self.llm)
         self.prompter = PromptGenerator(self.llm)
-        self.sql_conn = DBConn()  
+        self.sql_conn = DBConn()
         self.user_id = 0
         self.user_name = ""
+        self.qb_ltm = []
 
     def introduce(self):
         try:
+            context = "general"
             user, new_user = self.sql_conn.fetch_current_user()
             self.user_id = user[0]
             if new_user:
                 intro_template = read_json("INTRODUCTION_NEW_USER")
-                self.furhat_conn.furhat_speak(intro_template["1"])
-                self.furhat_conn.furhat_speak(intro_template["2"])
-                user_dialogue = self.furhat_conn.furhat_listen()
+                self.furhat_conn.furhat_speak(intro_template["1"], context=context)
+                self.furhat_conn.furhat_speak(intro_template["2"], context=context)
+                user_dialogue = self.furhat_conn.furhat_listen(context = context, current_user_context = context, user_id = self.user_id)
                 user_name = self.prompter.prompt_generator_dialogue(user_dialogue, "NAME", "FLAN")
-                self.sql_conn.update_name(self.user_id,user_name)
+                self.sql_conn.update_name(self.user_id, user_name)
                 self.user_name = user_name
                 bot_dialogue = fill_template(["NAME"], [user_name], intro_template["3"])
-            
+
             else:
                 intro_template = read_json("INTRODUCTION_RETURNING_USER")
-                self.furhat_conn.furhat_speak(intro_template["1"])
+                self.furhat_conn.furhat_speak(intro_template["1"], context=context)
                 self.user_name = user[1]  # get name from response
                 bot_dialogue = fill_template(["NAME"], [self.user_name], intro_template["2"])
-            
-            self.furhat_conn.furhat_speak(bot_dialogue)
-            user_dialogue = self.furhat_conn.furhat_listen()
+
+            self.furhat_conn.furhat_speak(bot_dialogue, context=context)
+            user_dialogue = self.furhat_conn.furhat_listen(context = context, current_user_context = context, user_id = self.user_id)
             study_flag = self.prompter.prompt_generator_dialogue(user_dialogue, "YES_NO")
             print("Study flag: ", study_flag)
-            
+
             if study_flag == 'yes':
                 return True
             else:
                 return False
-        
+
         except Exception as e:
             raise Exception(e)
 
@@ -57,8 +61,8 @@ class Biblo:
             user_dialogue = self.furhat_conn.furhat_listen()
             topic_chosen = self.prompter.prompt_generator_dialogue(user_dialogue, "TOPIC","FLAN")
             if "profit" in topic_chosen:
-                topic_chosen = "gain"
-            if topic_chosen not in read_json("LIST_OF_TOPICS"):
+                topic_chosen = "profit_and_loss"
+            if topic_chosen not in read_json("LIST_OF_TOPICS_RAG"):
                 self.furhat_conn.furhat_speak(topic_templates["2"])
                 user_dialogue = self.furhat_conn.furhat_listen()
                 topic_flag = self.prompter.prompt_generator_dialogue(user_dialogue, "YES_NO")
@@ -67,45 +71,60 @@ class Biblo:
                 else:
                     topic_chosen = self.prompter.prompt_generator_dialogue(user_dialogue, "TOPIC", "FLAN")
                     if "profit" in topic_chosen:
-                        topic_chosen = "gain"
-                    if topic_chosen not in read_json("LIST_OF_TOPICS"):
+                        topic_chosen = "profit_and_loss"
+                    if topic_chosen not in read_json("LIST_OF_TOPICS_RAG"):
                         topic_chosen = "bodmas"
-                    
-            bot_dialogue = fill_template(["TOPIC"], [topic_chosen], topic_templates["3"])
-            self.furhat_conn.furhat_speak(bot_dialogue)
+
+            topic_chosen = topic_chosen.lower()
+            if topic_chosen == "profit_and_loss":
+                bot_dialogue = fill_template(["TOPIC"], ["profit and loss"], topic_templates["3"])
+                self.furhat_conn.furhat_speak(bot_dialogue)
+            else:
+                bot_dialogue = fill_template(["TOPIC"], [topic_chosen], topic_templates["3"])
+                self.furhat_conn.furhat_speak(bot_dialogue)
             return topic_chosen
-            
+
         except Exception as e:
             raise Exception(e)
-        
+
     def quiz(self, topic_chosen):
-        questions_asked = 0
         to_study = True
-        correct_questions, incorrect_questions = 0,0
+        questions_asked = 0
+        correct_questions, incorrect_questions = 0, 0
         total_questions = read_json("TOTAL_QUESTIONS")
         emotion_prompts = read_json("PROMPTS")
         quiz_dialogue = read_json("QUIZ_DIALOGUE")
         try:
-            qb = generate_qb_topic(topic_chosen)
+            qb, full_qb, prev_correct, prev_incorrect = generate_qb_topic(self.user_id, topic_chosen)
+            self.qb_ltm = full_qb.copy()
+            if correct_questions > 0 or incorrect_questions > 0:
+                recap_dialogue = fill_template(["CORRECT", "INCORRECT"],
+                                         [str(prev_correct), str(prev_incorrect)],
+                                         read_json("RECAP_PREV_SESSION"))
+                self.furhat_conn.furhat_speak(recap_dialogue)
+
             started = False
             for question in qb:
                 if started:
                     self.furhat_conn.furhat_speak(random.choice(quiz_dialogue["NEXT_QUESTION"]))
                 started = True
 
-                self.furhat_conn.furhat_speak(question["question"], False)
+                if "is_correct" in question and not question["is_correct"]:
+                    self.furhat_conn.furhat_speak("You had got this question wrong the last time, let's try to nail it now!")
+
+                self.furhat_conn.furhat_speak(question["question"], block_flag=False)
                 self.furhat_conn.furhat_speak("The options are: ")
                 for option in question["options"]:
-                    self.furhat_conn.furhat_speak(option, False)
+                    self.furhat_conn.furhat_speak(option, block_flag=False)
 
                 question["choice"] = render_ui(question, self.furhat_conn)
-                
+
                 if question["choice"] == question["correct"]:
                     is_correct = True
                     correct_questions += 1
 
                     self.furhat_conn.furhat_speak(random.choice(quiz_dialogue["CORRECT_ANSWER"]))
-                    if correct_questions >= math.floor(total_questions/2):
+                    if correct_questions >= math.ceil(total_questions / 2):
                         self.furhat_conn.furhat_speak(random.choice(quiz_dialogue["MANY_CORRECT_ANSWERS"]))
 
                 else:
@@ -114,13 +133,14 @@ class Biblo:
                     # render on UI, incorrect answer
                     self.furhat_conn.furhat_speak(random.choice(quiz_dialogue["INCORRECT_ANSWER"]))
                     self.furhat_conn.furhat_speak(f"The correct answer is {question['correct']}, you answered {question['choice']}")
-                    if incorrect_questions >= math.floor(total_questions/2):
+                    if incorrect_questions >= math.floor(total_questions / 2):
                         self.furhat_conn.furhat_speak(random.choice(quiz_dialogue["MANY_INCORRECT_ANSWERS"]))
-                
+
                 show_evaluation(is_correct, question)
-                
-                emotion = self.detect_emotion()
+                question["is_correct"] = is_correct
                 questions_asked += 1
+
+                emotion = self.detect_emotion()
 
                 user_answer = "correct" if is_correct else "incorrect"
                 llm_prompt = fill_template(["RIGHT/WRONG", "EMOTION"], [user_answer, emotion], emotion_prompts["EMOTION_EXPRESSION"])
@@ -136,6 +156,8 @@ class Biblo:
                 else:
                     self.furhat_conn.furhat_speak(question["explanation"])
 
+                self.quiz_to_stm(question)
+
                 if questions_asked < read_json("TOTAL_QUESTIONS"):
                     llm_prompt = fill_template(["RIGHT/WRONG", "EMOTION"], [user_answer, emotion], emotion_prompts["EMOTION_DIALOGUE"])
                     llm_resp = self.llm.ask_llm_openai(llm_prompt)
@@ -146,14 +168,40 @@ class Biblo:
                         if break_wanted == 'yes':
                             self.furhat_conn.furhat_speak("Okay, let's take a break")
                             to_study = self.general_talk()
-                
+
                 if not to_study:
                     break
-            
+
             return correct_questions, incorrect_questions
 
         except Exception as e:
             raise Exception(e)
+
+    def quiz_to_stm(self, question):
+        route = "user_convo"
+        stm_payload = dict()
+        stm_payload["context"] = "quiz"
+        stm_payload["current_user_context"] = "quiz"
+        stm_payload["user_id"] = self.user_id
+        is_correct = "correct" if question["is_correct"] else "incorrect"
+        stm_payload["BOT"] = question["question"]
+        stm_payload["USER"] = f"User gave the {is_correct} answer choosing option {question['choice']}"
+        question_keys = ["correct", "explanation", "hint", "question", "question_id", "topic", "topic_id", "is_correct"]
+        for key in question_keys:
+            stm_payload[key] = question[key]
+        stm_payload["options"] = str(question["options"])
+        stm_payload["user_response"] = question["choice"]
+        stm_payload["user_reasoning"] = ""
+        print("STM payload for quiz: ", stm_payload)
+        make_api_call(route, "POST", stm_payload)
+        for item in self.qb_ltm:
+            if item["question_id"] == stm_payload["question_id"]:
+                self.qb_ltm.remove(item)
+        del stm_payload["BOT"]
+        del stm_payload["USER"]
+        del stm_payload["current_user_context"]
+        self.qb_ltm.append(stm_payload)
+
 
     def detect_emotion(self):
         emotion = self.sql_conn.fetch_emotion(self.user_id)
@@ -165,31 +213,54 @@ class Biblo:
             emotion = "Happy"
         return emotion
 
+    def session_end(self, correct_questions, incorrect_questions):
+        performance = str(correct_questions - incorrect_questions)
+        performance_specific = read_json("PERFORMANCE_SPECIFIC_DIALOGUE")[performance]
+        bot_dialogue = fill_template(["CORRECT", "INCORRECT", "PERFORMANCE_SPECIFIC"],
+                                     [str(correct_questions), str(incorrect_questions), performance_specific],
+                                     read_json("SESSION_END_DIALOGUE"))
+        self.furhat_conn.furhat_speak(bot_dialogue)
+        return
+
     def general_talk(self):
         try:
+            context = "general" #because talk function call saves it automatically
+            route = "lets_talk"
+            user_id = self.user_id
             bot_dialogue = random.choice(read_json("GENERAL_TALK"))
             prompt_list = read_json("PROMPTS")
-            self.furhat_conn.furhat_speak(bot_dialogue)
+            self.furhat_conn.furhat_speak(bot_dialogue, context=context)
             dialog_length = 0
             while True:
-                user_dialogue = self.furhat_conn.furhat_listen()
+                user_dialogue = self.furhat_conn.furhat_listen(context=context, current_user_context=context, user_id=user_id)
                 dialog_length += 1
                 emotion = self.detect_emotion()
-                general_talk_prompt = fill_template(["DIALOGUE", "EMOTION"], [user_dialogue, emotion], prompt_list["GENERAL_TALK"])
-                print(general_talk_prompt)
-                bot_dialogue = self.prompter.prompt_generator(general_talk_prompt)
-                self.furhat_conn.furhat_speak(bot_dialogue)
+                general_talk_payload = {}
+                general_talk_payload["BOT"] = bot_dialogue
+                general_talk_payload["USER"] = user_dialogue + ". I feel " + emotion + "."
+                general_talk_payload["context"] = context
+                general_talk_payload["current_user_context"] = context
+                general_talk_payload["user_id"] = user_id
+                response = make_api_call(route, "POST", general_talk_payload)
+                bot_dialogue = response["generated_dialog"]
+
+                # TODO: fetch bot dialogue from service
+                # general_talk_prompt = fill_template(["DIALOGUE", "EMOTION"], [user_dialogue, emotion],
+                #                                     prompt_list["GENERAL_TALK"])
+                # print(general_talk_prompt)
+                # bot_dialogue = self.prompter.prompt_generator(general_talk_prompt)
+                self.furhat_conn.furhat_speak(bot_dialogue, context=context)
                 if not dialog_length % 3:
                     bot_dialogue = read_json("GENERAL_TO_QUIZ_DIALOGUE")
                     self.furhat_conn.furhat_speak(bot_dialogue)
-                    user_dialogue = self.furhat_conn.furhat_listen()
+                    user_dialogue = self.furhat_conn.furhat_listen(context = context, current_user_context = context, user_id = user_id)
                     to_study = self.prompter.prompt_generator_dialogue(user_dialogue, "SWITCH_TO_STUDY")
                     if to_study == 'yes':
                         return True
                     else:
                         bot_dialogue = read_json("TO_STOP")
-                        self.furhat_conn.furhat_speak(bot_dialogue)
-                        user_dialogue = self.furhat_conn.furhat_listen()
+                        self.furhat_conn.furhat_speak(bot_dialogue, context=context)
+                        user_dialogue = self.furhat_conn.furhat_listen(context = context, current_user_context = context, user_id = user_id)
                         to_end = self.prompter.prompt_generator_dialogue(user_dialogue, "END_SESSION")
                         if to_end == 'yes':
                             return False
@@ -197,12 +268,23 @@ class Biblo:
         except Exception as e:
             raise Exception(e)
 
-    def session_end(self, correct_questions,incorrect_questions):
-        performance = str(correct_questions-incorrect_questions)
-        performance_specific = read_json("PERFORMANCE_SPECIFIC_DIALOGUE")[performance]
-        bot_dialogue = fill_template(["CORRECT", "INCORRECT", "PERFORMANCE_SPECIFIC"], [str(correct_questions), str(incorrect_questions), performance_specific], read_json("SESSION_END_DIALOGUE"))
-        self.furhat_conn.furhat_speak(bot_dialogue)
-    
+    def short_term_to_long_term(self):
+        route = "move_stm_to_ltm"
+        make_api_call(route, "GET")
+        print("Moved STM to LTM")
+
+        for item in self.qb_ltm:
+            item["options"] = str(item["options"])
+
+        route = "save-user-quiz-res-to-ltm"
+        quiz_to_ltm_payload = {
+            "test_session_id": str(uuid.uuid1()),
+            "payload": self.qb_ltm
+        }
+        print("Quiz to LTM payload\n", quiz_to_ltm_payload)
+        make_api_call(route, "POST", quiz_to_ltm_payload)
+        print("Saved questions to LTM")
+
     def talk(self):
         try:
             session_start()
@@ -213,7 +295,10 @@ class Biblo:
                 topic = self.choose_topic()
                 correct, wrong = self.quiz(topic)
                 self.session_end(correct, wrong)
+                print("Moving to memory")
+                self.short_term_to_long_term()
                 return
+
             self.furhat_conn.furhat_end_session()
 
         except Exception as e:
@@ -223,7 +308,7 @@ class Biblo:
             self.sql_conn.exit_user(self.user_id)
             self.sql_conn.close_connection()
 
-            
+
 if __name__ == "__main__":
     Biblo().talk()
 

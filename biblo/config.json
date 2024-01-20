@@ -27,6 +27,7 @@
     "NO_DIALOGUE":"Are you still there?",
     "TO_STOP":"Do you want to stop the session?",
     "GENERAL_TO_QUIZ_DIALOGUE":"Do you want to get back to the questions?",
+    "RECAP_PREV_SESSION": "Let's pick up where we left off. In the last session for this topic, you had got {{INCORRECT}} correct and {{CORRECT}} wrong. Try to beat that today!",
     "SESSION_END_DIALOGUE":"You have reached the end of the session. You got {{CORRECT}} questions right and {{INCORRECT}} wrong. {{PERFORMANCE_SPECIFIC}}. Thanks and have a nice day! Goodbye",
     "SESSION_END_NO_SCORE": "You have reached the end of the session. Thanks and have a nice day! Goodbye",
     "PERFORMANCE_SPECIFIC_DIALOGUE":{
@@ -44,14 +45,14 @@
     },
     "PROMPTS":{
         "NAME":"What is the name of the person saying the following? {{DIALOGUE}}",
-        "YES_NO": "Answer yes/no whether the following statement is affirmative? {{DIALOGUE}}",
+        "YES_NO": "Answer in one word yes/no whether the following statement is affirmative? {{DIALOGUE}}",
         "TOPIC": "What does the user want to study if they say the following? {{DIALOGUE}}",
-        "COHERENT_DIALOGUE": "Answer yes/no whether the following dialogue is coherent. {{DIALOGUE}}",
+        "COHERENT_DIALOGUE": "Answer in one word yes/no whether the following dialogue is coherent. {{DIALOGUE}}",
         "EMOTION_DIALOGUE": "The user got a mathematics question {{RIGHT/WRONG}} and is showing {{EMOTION}} emotion. Answer yes/no/maybe if user needs a break? ",
         "EMOTION_EXPRESSION": "I got mathematics question {{RIGHT/WRONG}} and am showing {{EMOTION}} emotion. Give a suitable facial expression out of the following: Smile, Frown, Sadness, Surprise, Curiosity.",
         "GENERAL_TALK": "{{DIALOGUE}}. I feel {{EMOTION}}",
-        "SWITCH_TO_STUDY": "Answer yes/no whether I am agreeing if I say the following: {{DIALOGUE}}",
-        "END_SESSION": "Do I want to stop the session if I say the following, answer yes/no: {{DIALOGUE}}"
+        "SWITCH_TO_STUDY": "Answer in one word yes/no whether I am agreeing if I say the following: {{DIALOGUE}}",
+        "END_SESSION": "Do I want to stop the session if I say the following, answer in one word yes/no: {{DIALOGUE}}"
     },
     "LIST_OF_TOPICS":["geometry","algebra","general","gain","percentages"],
     "LIST_OF_TOPICS_RAG":["geometry","algebra","bodmas","profit_and_loss","percentages"],

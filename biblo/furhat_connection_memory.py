@@ -4,6 +4,7 @@ import random
 from read_json_config import read_json
 from generate_prompt import PromptGenerator
 from query_llm import AskLLM
+from generate_qb_memory import make_api_call
 
 class Status:
     def __init__(self):
@@ -38,7 +39,7 @@ class FurhatConnection:
                     self.dialogue["current_user_context"] = current_user_context
                     self.dialogue["user_id"] = user_id
                     print("STM Dialogue: ", self.dialogue)
-                    self.send_to_stm()
+                    # self.send_to_stm(self.dialogue)
                     self.dialogue = {}
                 return dialogue
             else:
@@ -52,8 +53,8 @@ class FurhatConnection:
         if not result.success or not result.message:
             user_dialogue = self.ask_again("no_dialog")
         else:
-            is_coherent = self.prompter.prompt_generator_dialogue(result.message, "COHERENT_DIALOGUE")
-            print(is_coherent)
+            # is_coherent = self.prompter.prompt_generator_dialogue(result.message, "COHERENT_DIALOGUE")
+            # print(is_coherent)
             is_coherent = 'yes'
             if is_coherent == 'yes':
                 return True, result.message
@@ -63,8 +64,8 @@ class FurhatConnection:
         if not user_dialogue.success or not user_dialogue.message:
             return False, ""
         else:
-            is_coherent = self.prompter.prompt_generator_dialogue(result.message, "COHERENT_DIALOGUE")
-            print(is_coherent)
+            # is_coherent = self.prompter.prompt_generator_dialogue(result.message, "COHERENT_DIALOGUE")
+            # print(is_coherent)
             is_coherent = 'yes' #temporary since llm is giving no always
             if is_coherent == 'yes':
                 return True, user_dialogue.message
@@ -86,7 +87,7 @@ class FurhatConnection:
     def furhat_speak(self, speech, context = "study", block_flag = True):
         if context != "study":
             self.dialogue["context"] = context
-            if not "BOT" in self.dialogue:
+            if "BOT" not in self.dialogue:
                 self.dialogue["BOT"] = speech
             else:
                 self.dialogue["BOT"] = self.dialogue["BOT"] + ". " + speech
@@ -99,8 +100,9 @@ class FurhatConnection:
         else:
             self.furhat.gesture(name=self.gestures["default"])
     
-    def send_to_stm(self):
-        pass
+    def send_to_stm(self, general_talk_payload):
+        route = "user_convo"
+        make_api_call(route, "POST", general_talk_payload)
 
     def furhat_end_session(self):
         self.furhat.say(text=self.end_dialog, blocking=True)
