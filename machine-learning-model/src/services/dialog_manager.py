@@ -10,14 +10,14 @@ class DialogManagerError(Exception):
 
 def lets_talk(raw_conversation):
     # Predict Context
-    user_intent = predict_context(raw_conversation['USER'])
+    user_intent = "no" #predict_context(raw_conversation['USER'])
     # if Study, fetch RAG
     domain_knowledge = None
-    try:
-        if user_intent['rag_fetch'] == 'yes':
-            domain_knowledge = fetch_from_domain_knowledge(raw_conversation['USER'], raw_conversation['user_id'])
-    except TopicNotInRAG:
-        domain_knowledge = None
+    # try:
+        # if user_intent['rag_fetch'] == 'yes':
+        # domain_knowledge = fetch_from_domain_knowledge(raw_conversation['USER'], raw_conversation['user_id'])
+    # except TopicNotInRAG:
+    #     domain_knowledge = None
     # TODO: Get recent Conversations based on just
     recent_convos = get_recent_conversation_history(raw_conversation)
     # Else Get last few convos and Reply to most resent user conversation

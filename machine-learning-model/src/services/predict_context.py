@@ -39,7 +39,9 @@ def ask_llm_advanced_without_memory(user_conversation):
     try:
         api_url = 'https://api.openai.com/v1/chat/completions'
         headers = {"Authorization": "Bearer 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"}
+        print(user_conversation)
         payload = generate_quiz_message(user_conversation)
+        print(payload)
         response = requests.post(api_url, headers=headers, json=payload)
         response.raise_for_status()
         formatted_response = response.json()['choices'][0]['message']['content']
@@ -97,7 +99,7 @@ def generate_quiz_message(user_content):
         "messages": [
             {
                 "role": "system",
-                "content": "You are a Quizzing bot that quizzes students and also cares about their emotional state. You do not have a questions and will be provided externally. Respond in less than 10 words. Do not ask questions"
+                "content": "You are a Quizzing bot that quizzes students and also cares about their emotional state. You need to make some small talk with the student as per what they say. Respond in less than 10 words. Do not ask questions"
             },
             {
                 "role": "user",

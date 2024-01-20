@@ -162,8 +162,10 @@ def stm_to_ltm_migration():
         upsert_data = []
         for item in data_list:
             upsert_data.append(
-                (str(uuid.uuid4()), model.encode("micheal scott related data").tolist(), item['metadata']))
-            print(upsert_data)
+                (str(uuid.uuid4()), model.encode("User related data").tolist(), item['metadata']))
+        print("******************************************************************************************************")
+        print(upsert_data)
+        print("******************************************************************************************************")
         index.upsert(upsert_data)
         clear_stm()
     except Exception as e:
@@ -196,6 +198,9 @@ def save_user_quiz_responses_to_ltm(payload):
             item['test_date'] = today_date
             upsert_data.append(
                 (str(uuid.uuid4()), model.encode(quiz_search_prompt).tolist(), item))
+        print("******************************************************************************************************")
+        print(upsert_data)
+        print("******************************************************************************************************")
         index.upsert(upsert_data)
     except Exception as e:
         print(e)
