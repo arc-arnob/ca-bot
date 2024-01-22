@@ -8,7 +8,15 @@ class DialogManagerError(Exception):
     pass
 
 
-def lets_talk(raw_conversation):
+def lets_talk(two_conversation):
+    print("$%$%$%$%$%$%$%$%%$%$%%$%$%%$%$")
+    print(two_conversation)
+
+    raw_conversation = [item for item in two_conversation if item.get("current") == 1][0]
+    prev_conversation = None
+    if (len(two_conversation) > 1):
+        prev_conversation = [item for item in two_conversation if item.get("current") == 0][0]
+    print("&$&#$&#&$#&$#&$#&$*&#$#$")
     # Predict Context
     user_intent = predict_context(raw_conversation['USER'])
     # if Study, fetch RAG
@@ -20,6 +28,16 @@ def lets_talk(raw_conversation):
         domain_knowledge = None
     # TODO: Get recent Conversations based on just
     recent_convos = get_recent_conversation_history(raw_conversation)
+    if(prev_conversation is not None):
+        psuedo_augment_no_db = {
+                'metadata': raw_conversation
+            }
+        recent_convos.append(
+            psuedo_augment_no_db
+        )
+    print("#############$$$$$$##")
+    print(recent_convos)
+    print("$####################")
     # Else Get last few convos and Reply to most resent user conversation
     generated_dialog = generate_dialog(raw_conversation, user_intent, domain_knowledge, recent_convos)
     # Store to Short Term Memory
