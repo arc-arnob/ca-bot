@@ -43,7 +43,7 @@ class DBConn():
     
     def exit_user(self, user_id):
         if user_id:
-            self.cur.execute(f"UPDATE users SET current_user = 1 WHERE userid = {user_id};")
+            self.cur.execute(f"UPDATE users SET current_user = 0 WHERE userid = {user_id};")
             self.db_conn.commit()
             return
 

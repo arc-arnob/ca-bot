@@ -228,27 +228,32 @@ class Biblo:
             route = "lets_talk"
             user_id = self.user_id
             bot_dialogue = random.choice(read_json("GENERAL_TALK"))
-            prompt_list = read_json("PROMPTS")
             self.furhat_conn.furhat_speak(bot_dialogue, context=context)
             dialog_length = 0
+            general_talk_prev = {}
             while True:
                 user_dialogue = self.furhat_conn.furhat_listen(context=context, current_user_context=context, user_id=user_id)
                 dialog_length += 1
                 emotion = self.detect_emotion()
+
+                general_talk_payload_list = []
+                if "current" in general_talk_prev:
+                    general_talk_prev["current"] = 0
+                    general_talk_payload_list.append(general_talk_prev)
                 general_talk_payload = {}
                 general_talk_payload["BOT"] = bot_dialogue
                 general_talk_payload["USER"] = user_dialogue + ". I feel " + emotion + "."
                 general_talk_payload["context"] = context
                 general_talk_payload["current_user_context"] = context
                 general_talk_payload["user_id"] = user_id
-                response = make_api_call(route, "POST", general_talk_payload)
-                bot_dialogue = response["generated_dialog"]
+                general_talk_payload["current"] = 1
+                general_talk_payload_list.append(general_talk_payload)
+                response = make_api_call(route, "POST", general_talk_payload_list)
+                print(general_talk_payload_list)
+                general_talk_prev = general_talk_payload
 
-                # TODO: fetch bot dialogue from service
-                # general_talk_prompt = fill_template(["DIALOGUE", "EMOTION"], [user_dialogue, emotion],
-                #                                     prompt_list["GENERAL_TALK"])
-                # print(general_talk_prompt)
-                # bot_dialogue = self.prompter.prompt_generator(general_talk_prompt)
+
+                bot_dialogue = response["generated_dialog"]
                 self.furhat_conn.furhat_speak(bot_dialogue, context=context)
                 if not dialog_length % 3:
                     bot_dialogue = read_json("GENERAL_TO_QUIZ_DIALOGUE")
@@ -305,7 +310,7 @@ class Biblo:
             print(e)
             raise(e)
         finally:
-            self.sql_conn.exit_user(self.user_id)
+            # self.sql_conn.exit_user(self.user_id)
             self.sql_conn.close_connection()
 
 

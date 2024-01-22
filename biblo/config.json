@@ -14,7 +14,7 @@
         "3": "Okay, we shall be studying {{TOPIC}} today"
     },
     "FURHAT_GESTURES":{"smile":"BigSmile","surprise":"Surprise","frown":"BrowFrown","curiosity":"Oh","sadness":"ExpressSad","default":"Smile"},
-    "GENERAL_TALK":["How are you today?","What would you like to talk about?","What is on your mind?"],
+    "GENERAL_TALK":["What would you like to talk about?","What is on your mind?"],
     "QUIZ_DIALOGUE":{
         "CORRECT_ANSWER":["Well done! You got it right", "That's correct!", "Right answer!","Great job!","That's the correct answer","Absolutely right!","You nailed it!"],
         "MANY_CORRECT_ANSWERS":["You're on a roll!", "Nicely done! Keep it up!"],
@@ -45,13 +45,13 @@
     },
     "PROMPTS":{
         "NAME":"What is the name of the person saying the following? {{DIALOGUE}}",
-        "YES_NO": "Answer in one word yes/no whether the following statement is affirmative? {{DIALOGUE}}",
+        "YES_NO": "Answer in one word from the list [yes,no] whether the following statement is affirmative? {{DIALOGUE}}",
         "TOPIC": "What does the user want to study if they say the following? {{DIALOGUE}}",
-        "COHERENT_DIALOGUE": "Answer in one word yes/no whether the following dialogue is coherent. {{DIALOGUE}}",
-        "EMOTION_DIALOGUE": "The user got a mathematics question {{RIGHT/WRONG}} and is showing {{EMOTION}} emotion. Answer yes/no/maybe if user needs a break? ",
+        "COHERENT_DIALOGUE": "Answer in one word from the list [yes,no] whether the following dialogue is coherent. {{DIALOGUE}}",
+        "EMOTION_DIALOGUE": "The user got a mathematics question {{RIGHT/WRONG}} and is showing {{EMOTION}} emotion. Answer in one word from the list [yes,no,maybe] if user needs a break? ",
         "EMOTION_EXPRESSION": "I got mathematics question {{RIGHT/WRONG}} and am showing {{EMOTION}} emotion. Give a suitable facial expression out of the following: Smile, Frown, Sadness, Surprise, Curiosity.",
         "GENERAL_TALK": "{{DIALOGUE}}. I feel {{EMOTION}}",
-        "SWITCH_TO_STUDY": "Answer in one word yes/no whether I am agreeing if I say the following: {{DIALOGUE}}",
+        "SWITCH_TO_STUDY": "Answer in one word from the list [yes,no] whether I am agreeing if I say the following: {{DIALOGUE}}",
         "END_SESSION": "Do I want to stop the session if I say the following, answer in one word yes/no: {{DIALOGUE}}"
     },
     "LIST_OF_TOPICS":["geometry","algebra","general","gain","percentages"],

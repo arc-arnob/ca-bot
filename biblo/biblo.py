@@ -220,7 +220,7 @@ class Biblo:
             print(e)
             raise(e)
         finally:
-            self.sql_conn.exit_user(self.user_id)
+            # self.sql_conn.exit_user(self.user_id)
             self.sql_conn.close_connection()
 
             
